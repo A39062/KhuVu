@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager APP - Đăng nhập & Đăng ký</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            max-width: 980px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 50px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .left {
+            width: 50%;
+            text-align: left;
+        }
+
+        .left h1 {
+            color: #2d6ae4;
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .left p {
+            font-size: 24px;
+            color: #1c1e21;
+        }
+
+        .right {
+            width: 40%;
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .right input[type="text"],
+        .right input[type="password"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .right input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #2d6ae4;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .right input[type="submit"]:hover {
+            background-color: #043493;
+        }
+
+        .right a {
+            display: block;
+            text-align: center;
+            margin: 10px 0;
+            color: #8118f2;
+            text-decoration: none;
+        }
+
+        .right a:hover {
+            text-decoration: underline;
+        }
+
+        .create-account {
+            background-color: #7dbaf7;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 16px;
+            margin-top: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .create-account:hover {
+            background-color: #6da9f1;
+        }
+
+        .reset-password,
+        .register-account {
+            display: none;
+            /* Ẩn các form quên mật khẩu và đăng ký mặc định */
+        }
+
+        .container-form {
+            position: relative;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-form">
+        <div class="container">
+            <div class="left">
+                <h1>Manager APP</h1>
+                <p>Chào mừng bạn đến với Cửa hàng tạp hóa.</p>
+            </div>
+            <div class="right">
+                <!-- Form đăng nhập -->
+                <form id="loginForm">
+                    <input type="text" id="emailOrPhone" placeholder="Email hoặc số điện thoại" required>
+                    <input type="password" id="password" placeholder="Mật khẩu" required>
+                    <input type="submit" value="Đăng nhập">
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Thêm hàm saveAuthToken
+        function saveAuthToken(token, role, userData) {
+            if (role === 'admin') {
+                localStorage.setItem('admin_token', token);
+            } else {
+                localStorage.setItem('user_token', token);
+                if (userData) {
+                    localStorage.setItem('user_data', JSON.stringify({
+                        employee_code: userData.employee_code,
+                        name: userData.name,
+                        email: userData.email
+                    }));
+                }
+            }
+        }
+
+        function showForm(formId) {
+            document.getElementById('loginForm').style.display = 'none';
+            if (document.getElementById(formId)) {
+                document.getElementById(formId).style.display = 'block';
+            }
+        }
+
+        // Xử lý form đăng nhập
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const emailOrPhone = document.getElementById('emailOrPhone').value;
+            const password = document.getElementById('password').value;
+
+            // Giả sử bạn đang sử dụng fetch để gọi API
+            fetch('login.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    emailOrPhone: emailOrPhone,
+                    password: password
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const userData = {
+                            employee_code: data.employee_code,
+                            name: data.name,
+                            email: data.email
+                        };
+
+                        // Gọi hàm saveAuthToken với đầy đủ tham số
+                        saveAuthToken(data.token, data.role, userData);
+                        // Lưu token vào localStorage
+                        localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('userRole', data.role);
+                        localStorage.setItem('userEmail', data.email);
+                        localStorage.setItem('employeeCode', data.employee_code);
+                        localStorage.setItem('userName', data.name);
+
+                        // Chuyển hướng người dùng
+                        window.location.href = data.redirect;
+                    } else {
+                        // Hiển thị thông báo lỗi
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Đã có lỗi xảy ra khi đăng nhập');
+                });
+        });
+
+        // Xóa các event listener cho các phần tử không tồn tại
+        // Các dòng dưới đây đã được xóa vì các phần tử không tồn tại trong HTML
+        /*
+        document.getElementById('backToLoginLink').addEventListener('click', function (e) {
+            e.preventDefault();
+            showForm('loginForm');
+        });
+
+        document.getElementById('backToLoginFromRegisterLink').addEventListener('click', function (e) {
+            e.preventDefault();
+            showForm('loginForm');
+        });
+        */
+    </script>
+</body>
+
+</html>

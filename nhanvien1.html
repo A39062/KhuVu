@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <title>Quản Lý Tài Khoản Nhân Viên</title>
+    <style>
+        /* CSS cho thanh điều hướng */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            overflow: hidden;
+            background-color: #2d6ae4;
+            position: sticky;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #043493;
+            color: #ddd;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-right a {
+            padding: 14px 20px;
+            margin-left: 10px;
+        }
+
+        .logout {
+            background-color: #2d6ae4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .logout:hover {
+            background-color: #043493;
+        }
+
+        /* CSS cho bố cục chính */
+        .container {
+            display: flex;
+            padding: 20px;
+        }
+
+        .left-column {
+            flex: 1;
+            margin-right: 20px;
+        }
+
+        .right-column {
+            flex: 2;
+        }
+
+        /* CSS cho bảng */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        /* CSS cho nút thêm */
+        button {
+            background-color: #2d6ae4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #043493;
+        }
+
+        /* CSS cho form */
+        form {
+            margin-bottom: 20px;
+        }
+
+        .form-input {
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-input input {
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .form-input button {
+            align-self: flex-start;
+        }
+
+        /* CSS cho form đăng ký tài khoản */
+        #registerEmployeeForm {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        #registerEmployeeForm input {
+            margin-bottom: 10px;
+        }
+
+        .password-cell {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-password {
+            cursor: pointer;
+            color: #666;
+        }
+
+        .toggle-password:hover {
+            color: #af4ca5;
+        }
+
+        /* CSS cho Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 5px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        .modal .form-input {
+            margin-bottom: 15px;
+        }
+
+        .user-info {
+            color: #ffffff !important;
+            padding: 14px 20px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Thanh Điều Hướng -->
+    <div class="navbar">
+        <a href="tongquan.html">Tổng Quan</a>
+        <a href="hanghoa.html">Hàng Hóa</a>
+        <a href="nhanvien1.html">Nhân viên</a>
+        <a href="lichlam1.html">Lịch làm</a>
+        <a href="hoadon_admin.html">Hóa Đơn</a>
+        <div class="navbar-right">
+            <span id="userStatus" class="user-info"></span>
+            <a href="#" class="logout" onclick="handleLogout(event)">Đăng xuất</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Cột bên trái: Form tạo tài khoản -->
+        <div class="left-column">
+            <h1>Quản Lý Tài Khoản Nhân Viên</h1>
+
+            <h2>Tạo Tài Khoản Nhân Viên</h2>
+            <form id="registerEmployeeForm">
+                <div class="form-input">
+                    <input type="text" id="employeeRegCode" placeholder="Mã nhân viên" required>
+                    <input type="text" id="employeeRegName" placeholder="Tên nhân viên" required>
+                    <input type="email" id="employeeEmail" placeholder="Email" required>
+                    <input type="text" id="employeeRegPhone" placeholder="Số điện thoại" required>
+                    <input type="password" id="employeePassword" placeholder="Mật khẩu" required>
+                    <select id="employeeRole" required>
+                        <option value="">Chọn vai trò</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
+                    <textarea id="employeeNotes" placeholder="Ghi chú"></textarea>
+                    <button type="submit">Tạo Tài Khoản</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Cột bên phải: Danh sách tài khoản -->
+        <div class="right-column">
+            <h2>Danh Sách Tài Khoản Nhân Viên</h2>
+            <table id="accountTable">
+                <thead>
+                    <tr>
+                        <th>Mã Nhân Viên</th>
+                        <th>Tên Nhân Viên</th>
+                        <th>Email</th>
+                        <th>Số Điện Thoại</th>
+                        <th>Mật khẩu</th>
+                        <th>Vai Trò</th>
+                        <th>Ghi Chú</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Xử lý đăng ký tài khoản
+        document.getElementById('registerEmployeeForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const formData = {
+                employee_code: document.getElementById('employeeRegCode').value,
+                employee_name: document.getElementById('employeeRegName').value,
+                email: document.getElementById('employeeEmail').value,
+                phone: document.getElementById('employeeRegPhone').value,
+                password: document.getElementById('employeePassword').value,
+                role: document.getElementById('employeeRole').value,
+                notes: document.getElementById('employeeNotes').value
+            };
+            console.log('Form Data:', formData); // Thêm dòng này để kiểm tra
+            fetch('register.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Tạo tài khoản thành công!');
+                        document.getElementById('registerEmployeeForm').reset();
+                        loadAccounts();
+                    } else {
+                        alert('Lỗi: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Có lỗi xảy ra: ' + error);
+                });
+        });
+
+        // Load danh sách tài khoản
+        function loadAccounts() {
+            fetch('get_accounts.php')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Received Data:', data); // Thêm dòng này để kiểm tra
+                    const accountTable = document.getElementById('accountTable').getElementsByTagName('tbody')[0];
+                    accountTable.innerHTML = '';
+
+                    data.forEach(account => {
+                        const row = accountTable.insertRow();
+
+                        // Thêm các ô dữ liệu với khả năng chỉnh sửa
+                        const cells = [
+                            { value: account.employee_code, type: 'text' },
+                            { value: account.employee_name, type: 'text' },
+                            { value: account.email, type: 'email' },
+                            { value: account.phone, type: 'text' },
+                            {
+                                value: account.password,
+                                type: 'password',
+                                isPassword: true
+                            },
+                            {
+                                value: account.role,
+                                type: 'select',
+                                options: ['admin', 'user']
+                            },
+                            { value: account.notes || '', type: 'text' }
+                        ];
+
+                        cells.forEach((cell, index) => {
+                            const td = row.insertCell(index);
+                            if (cell.isPassword) {
+                                td.className = 'password-cell';
+                                td.innerHTML = `
+                                    <span class="password-text" style="display: none">${cell.value}</span>
+                                    <span class="password-dots">********</span>
+                                    <i class="toggle-password fas fa-eye" onclick="togglePassword(this)"></i>
+                                `;
+                            } else {
+                                td.textContent = cell.value;
+                                td.setAttribute('data-original', cell.value);
+                            }
+                        });
+
+                        // Thêm cột thao tác với nút sửa và xóa
+                        const actionCell = row.insertCell(7);
+                        actionCell.innerHTML = `
+                            <button onclick="enableEdit(this.parentElement.parentElement)">Sửa</button>
+                            <button onclick="deleteAccount('${account.id}')" style="background-color: #2d6ae4;">Xóa</button>
+                            <button onclick="saveChanges(this.parentElement.parentElement, ${account.id})" style="display:none; background-color: #28a745;">Lưu</button>
+                            <button onclick="cancelEdit(this.parentElement.parentElement)" style="display:none; background-color: #6c757d;">Hủy</button>
+                        `;
+                    });
+                })
+                .catch(error => alert('Có lỗi xảy ra khi nạp danh sách tài khoản: ' + error));
+        }
+
+        // Toggle hiển thị mật khẩu
+        function togglePassword(icon) {
+            const passwordCell = icon.parentElement;
+            const passwordText = passwordCell.querySelector('.password-text');
+            const passwordDots = passwordCell.querySelector('.password-dots');
+
+            if (passwordText.style.display === 'none') {
+                passwordText.style.display = 'inline';
+                passwordDots.style.display = 'none';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordText.style.display = 'none';
+                passwordDots.style.display = 'inline';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Xóa tài khoản
+        function deleteAccount(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
+                fetch('delete_account.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: parseInt(id) })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadAccounts();
+                            alert('Đã xóa tài khoản thành công');
+                        } else {
+                            alert('Lỗi: ' + data.message);
+                        }
+                    })
+                    .catch(error => alert('Có lỗi xảy ra khi xóa tài khoản: ' + error));
+            }
+        }
+
+        // Thêm các hàm mới để xử lý sửa trực tiếp
+        function enableEdit(row) {
+            // Ẩn nút sửa và xóa, hiện nút lưu và hủy
+            const buttons = row.cells[7].getElementsByTagName('button');
+            buttons[0].style.display = 'none'; // Sửa
+            buttons[1].style.display = 'none'; // Xóa
+            buttons[2].style.display = 'inline-block'; // Lưu
+            buttons[3].style.display = 'inline-block'; // Hủy
+
+            // Chuyển các ô thành input để sửa
+            for (let i = 0; i < row.cells.length - 1; i++) {
+                const cell = row.cells[i];
+                if (i !== 4) { // Bỏ qua ô mật khẩu
+                    const value = cell.textContent;
+                    if (i === 5) { // Ô vai trò
+                        cell.innerHTML = `
+                            <select>
+                                <option value="admin" ${value === 'admin' ? 'selected' : ''}>Admin</option>
+                                <option value="user" ${value === 'user' ? 'selected' : ''}>User</option>
+                            </select>
+                        `;
+                    } else if (i === 6) { // Ô ghi chú
+                        cell.innerHTML = `<textarea>${value}</textarea>`;
+                    } else {
+                        cell.innerHTML = `<input type="text" value="${value}">`;
+                    }
+                }
+            }
+        }
+
+        function saveChanges(row, id) {
+            const formData = {
+                id: id,
+                employee_code: row.cells[0].getElementsByTagName('input')[0].value,
+                employee_name: row.cells[1].getElementsByTagName('input')[0].value,
+                email: row.cells[2].getElementsByTagName('input')[0].value,
+                phone: row.cells[3].getElementsByTagName('input')[0].value,
+                role: row.cells[5].getElementsByTagName('select')[0].value,
+                notes: row.cells[6].getElementsByTagName('textarea')[0].value
+            };
+
+            fetch('update_account.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Cập nhật thành công!');
+                        loadAccounts();
+                    } else {
+                        alert('Lỗi: ' + data.message);
+                    }
+                })
+                .catch(error => alert('Có lỗi xảy ra: ' + error));
+        }
+
+        function cancelEdit(row) {
+            // Khôi phục lại các giá trị ban đầu
+            for (let i = 0; i < row.cells.length - 1; i++) {
+                const cell = row.cells[i];
+                if (i !== 4) { // Bỏ qua ô mật khẩu
+                    const originalValue = cell.getAttribute('data-original');
+                    if (i === 5) { // Ô vai trò
+                        cell.textContent = originalValue;
+                    } else {
+                        cell.textContent = originalValue;
+                    }
+                }
+            }
+
+            // Hiện lại nút sửa và xóa, ẩn nút lưu và hủy
+            const buttons = row.cells[7].getElementsByTagName('button');
+            buttons[0].style.display = 'inline-block'; // Sửa
+            buttons[1].style.display = 'inline-block'; // Xóa
+            buttons[2].style.display = 'none'; // Lưu
+            buttons[3].style.display = 'none'; // Hủy
+        }
+
+        // Load tài khoản khi trang được tải
+        loadAccounts();
+
+        function checkLoginStatus() {
+            const adminToken = localStorage.getItem('admin_token');
+
+            if (!adminToken) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('check_session.php', {
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.loggedIn && data.role === 'admin') {
+                        document.getElementById('userStatus').textContent = `Xin chào: ${data.email}`;
+                    } else {
+                        localStorage.removeItem('admin_token');
+                        window.location.href = 'index.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function handleLogout(event) {
+            event.preventDefault();
+            const adminToken = localStorage.getItem('admin_token');
+
+            if (!adminToken) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('logout.php', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    localStorage.removeItem('admin_token');
+                    window.location.href = 'index.html';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    localStorage.removeItem('admin_token');
+                    window.location.href = 'index.html';
+                });
+        }
+
+        // Gọi checkLoginStatus khi tải trang
+        checkLoginStatus();
+    </script>
+</body>
+
+</html>

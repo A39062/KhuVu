@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết Quả Tính Lương</title>
+    <style>
+        /* Giữ nguyên CSS */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            overflow: hidden;
+            background-color: #2d6ae4;
+            position: sticky;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: #f2f2f2;
+            background-color: #2d6ae4;
+            /* Đổi thành màu xanh nhạt hơn - giống với màu navbar */
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            /* Thêm hiệu ứng chuyển đổi */
+        }
+
+        .navbar a:hover {
+            background-color: #043493;
+            /* Giữ màu xanh đậm khi hover */
+            color: white;
+            /* Đổi thành màu trắng rõ ràng thay vì #ddd */
+            transition: all 0.3s ease;
+        }
+
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-right a {
+            padding: 14px 20px;
+            margin-left: 10px;
+        }
+
+        .logout {
+            background-color: #2d6ae4;
+            color: white !important;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .logout:hover {
+            background-color: #043493 !important;
+            color: white !important;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .salary-filter {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        select,
+        input {
+            width: 200px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #2d6ae4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1e5bb0;
+        }
+
+        .salary-result {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .salary-detail {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .salary-detail strong {
+            color: #2d6ae4;
+        }
+
+        .total-salary {
+            font-size: 1.2em;
+            color: #2d6ae4;
+            text-align: right;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f5f5f5;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            background-color: #fadbd8;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #2d6ae4;
+        }
+
+        .user-info {
+            color: white;
+
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <a href="thanhtoan.html">Thanh Toán</a>
+        <a href="hoadon.html">Hóa Đơn</a>
+        <a href="salary_result.html">Thống Kê</a>
+        <div class="navbar-right">
+            <span id="userStatus" class="user-info"></span>
+            <a href="#" class="logout" onclick="handleLogout(event)">Đăng xuất</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Thêm vào trước table#salaryHistory -->
+        <h2>Danh Sách Lịch Làm</h2>
+        <table id="workTimeTable">
+            <thead>
+                <tr>
+                    <th>Mã Nhân Viên</th>
+                    <th>Tên Nhân Viên</th>
+                    <th>Ngày làm </th>
+                    <th>Giờ Bắt Đầu</th>
+                    <th>Giờ Kết Thúc</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dữ liệu sẽ được nạp qua JavaScript -->
+            </tbody>
+        </table>
+
+        <h2>Kết Quả Tính Lương</h2>
+
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <div class="salary-filter">
+            <div class="filter-group">
+                <label for="month">Chọn tháng:</label>
+                <select id="month">
+                    <option value="">Chọn tháng</option>
+                    <option value="1">Tháng 1</option>
+                    <option value="2">Tháng 2</option>
+                    <option value="3">Tháng 3</option>
+                    <option value="4">Tháng 4</option>
+                    <option value="5">Tháng 5</option>
+                    <option value="6">Tháng 6</option>
+                    <option value="7">Tháng 7</option>
+                    <option value="8">Tháng 8</option>
+                    <option value="9">Tháng 9</option>
+                    <option value="10">Tháng 10</option>
+                    <option value="11">Tháng 11</option>
+                    <option value="12">Tháng 12</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="year">Chọn năm:</label>
+                <select id="year">
+                    <!-- Sẽ được điền bằng JavaScript -->
+                </select>
+            </div>
+            <button onclick="getSalaryResult()">Xem Lương</button>
+        </div>
+
+        <div id="salaryResult" class="salary-result" style="display: none;">
+            <!-- Kết quả tính lương sẽ được hiển thị ở đây -->
+        </div>
+
+        <table id="salaryHistory">
+            <thead>
+                <tr>
+                    <th>Mã Nhân Viên</th>
+                    <th>Tên Nhân Viên</th>
+                    <th>Tháng/Năm</th>
+                    <th>Số Giờ Làm</th>
+                    <th>Lương Theo Giờ</th>
+                    <th>Tổng Lương</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Lịch sử lương sẽ được hiển thị ở đây -->
+                <tr>
+                    <td colspan="6" class="loading">Đang tải dữ liệu...</td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+    <script>
+        // Biến global
+        let currentEmployeeCode = '';
+        let currentEmployeeName = '';
+        let userEmail = '';
+
+        // Hàm khởi tạo trang
+        function initializePage() {
+            const userToken = localStorage.getItem('user_token');
+            if (!userToken) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Kiểm tra dữ liệu trong localStorage
+            console.log('user_token:', localStorage.getItem('user_token'));
+
+            // Lấy thông tin nhân viên từ API
+            fetchUserInfo(userToken).then(() => {
+                // Chỉ tải lịch làm sau khi đã có thông tin nhân viên
+                if (currentEmployeeCode) {
+                    loadSchedules();
+                }
+            });
+
+            // Gọi các hàm khởi tạo
+            checkLoginStatus();
+            initializeYearDropdown();
+
+            // Tự động tải dữ liệu lương của tháng hiện tại
+            const currentMonth = new Date().getMonth() + 1;
+            const currentYear = new Date().getFullYear();
+            document.getElementById('month').value = currentMonth;
+            document.getElementById('year').value = currentYear;
+
+
+        }
+
+        // Hàm lấy thông tin người dùng từ API
+        function fetchUserInfo(token) {
+            // URL API lấy thông tin người dùng
+            const apiUrl = 'get-user-info.php';
+
+            return fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Không thể lấy thông tin người dùng');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.success) {
+                        // Lưu thông tin người dùng
+                        currentEmployeeCode = data.employee_code || '';
+                        currentEmployeeName = data.name || '';
+                        userEmail = data.email || '';
+
+                        console.log('Employee code:', currentEmployeeCode);
+                        console.log('Employee name:', currentEmployeeName);
+
+                        // Hiển thị thông tin người dùng
+                        document.getElementById('userStatus').textContent = `Xin chào: ${userEmail}`
+
+                        // Tải lịch sử lương nếu có mã nhân viên
+                        if (currentEmployeeCode) {
+                            fetchSalaryHistory(currentEmployeeCode);
+                        }
+
+                        return data; // Trả về dữ liệu để có thể tiếp tục chuỗi Promise
+                    } else {
+                        showError('Không thể lấy thông tin người dùng');
+                        throw new Error('Không thể lấy thông tin người dùng');
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi khi lấy thông tin người dùng:', error);
+                    showError('Lỗi khi lấy thông tin người dùng');
+                    throw error; // Ném lỗi để Promise bị reject
+                });
+        }
+
+
+        // Hàm kiểm tra trạng thái đăng nhập
+        function checkLoginStatus() {
+            const userToken = localStorage.getItem('user_token');
+            if (!userToken) {
+                window.location.href = 'index.html';
+                return;
+            }
+        }
+
+        // Hàm xử lý đăng xuất
+        function handleLogout(event) {
+            event.preventDefault();
+
+            // Gọi API đăng xuất
+            const apiUrl = 'http://localhost/api/logout.php';
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('user_token')}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Xóa token và chuyển hướng về trang đăng nhập
+                    localStorage.removeItem('user_token');
+                    window.location.href = 'index.html';
+                })
+                .catch(error => {
+                    console.error('Lỗi khi đăng xuất:', error);
+                    // Xóa token và chuyển hướng về trang đăng nhập ngay cả khi có lỗi
+                    localStorage.removeItem('user_token');
+                    window.location.href = 'index.html';
+                });
+        }
+
+        // Hàm khởi tạo dropdown năm
+        function initializeYearDropdown() {
+            const yearSelect = document.getElementById('year');
+            const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = ''; // Xóa các option cũ nếu có
+
+            for (let year = currentYear; year >= currentYear - 5; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+
+            // Tự động chọn năm hiện tại
+            yearSelect.value = currentYear;
+        }
+
+        // Hàm hiển thị lỗi
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+
+            // Tự động ẩn thông báo lỗi sau 5 giây
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Hàm lấy kết quả lương
+        function getSalaryResult() {
+            const month = document.getElementById('month').value;
+            const year = document.getElementById('year').value;
+
+            if (!month || !year) {
+                showError('Vui lòng chọn tháng và năm');
+                return;
+            }
+
+            // Lấy token người dùng
+            const userToken = localStorage.getItem('user_token');
+            if (!userToken) {
+                showError('Bạn cần đăng nhập để xem thông tin lương');
+                return;
+            }
+
+            // Kiểm tra xem có mã nhân viên không
+            if (!currentEmployeeCode) {
+                console.log('Không tìm thấy mã nhân viên');
+
+                // Thử lấy lại thông tin người dùng
+                fetchUserInfo(userToken);
+
+                // Nếu vẫn không có mã nhân viên, hiển thị thông báo lỗi
+                if (!currentEmployeeCode) {
+                    showError('Không tìm thấy thông tin mã nhân viên. Vui lòng đăng nhập lại.');
+                    return;
+                }
+            }
+
+            // Gọi API để lấy thông tin lương
+            fetchEmployeeSalary(currentEmployeeCode, month, year);
+        }
+
+        // Hàm gọi API để lấy thông tin lương
+        function fetchEmployeeSalary(employeeCode, month, year) {
+            // Hiển thị trạng thái đang tải
+            document.getElementById('salaryResult').innerHTML = '<div class="loading">Đang tải dữ liệu lương...</div>';
+            document.getElementById('salaryResult').style.display = 'block';
+
+            // URL API của bạn - điều chỉnh theo cấu hình thực tế
+            const apiUrl = `employee-salaries.php?employee_code=${employeeCode}&month=${month}&year=${year}`;
+
+            fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('user_token')}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Không thể lấy dữ liệu lương');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data) {
+                        throw new Error('Không có dữ liệu lương cho tháng này');
+                    }
+                    displaySalaryResult(data, month, year);
+                })
+                .catch(error => {
+                    document.getElementById('salaryResult').style.display = 'none';
+                    showError('Lỗi khi lấy dữ liệu lương: ' + error.message);
+                });
+        }
+
+        // Hàm hiển thị kết quả lương
+        function displaySalaryResult(data, month, year) {
+            const salaryResultElement = document.getElementById('salaryResult');
+
+            // Định dạng số tiền
+            const formatCurrency = (amount) => {
+                return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+            };
+
+            // Hiển thị thông tin chi tiết lương
+            salaryResultElement.innerHTML = `
+                <h2>Kết quả lương tháng ${month}/${year}</h2>
+                <div class="salary-detail">
+                    <span>Mã nhân viên:</span>
+                    <span>${data.employee_code}</span>
+                </div>
+                <div class="salary-detail">
+                    <span>Tên nhân viên:</span>
+                    <span>${data.employee_name}</span>
+                </div>
+                <div class="salary-detail">
+                    <span>Số giờ làm việc:</span>
+                    <span>${data.hours_worked} giờ</span>
+                </div>
+                <div class="salary-detail">
+                    <span>Lương theo giờ:</span>
+                    <span>${formatCurrency(data.hourly_wage)}</span>
+                </div>
+                <div class="total-salary">
+                    <strong>Tổng lương: ${formatCurrency(data.total_salary)}</strong>
+                </div>
+            `;
+            salaryResultElement.style.display = 'block';
+        }
+
+        // Hàm lấy lịch sử lương
+        // Hàm lấy lịch sử lương
+        function fetchSalaryHistory(employeeCode) {
+            // Hiển thị trạng thái đang tải
+            const tableBody = document.querySelector('#salaryHistory tbody');
+            tableBody.innerHTML = `
+        <tr>
+            <td colspan="6" class="loading">Đang tải lịch sử lương...</td>
+        </tr>
+    `;
+
+            // URL API của bạn - điều chỉnh theo cấu hình thực tế
+            const apiUrl = `employee-salaries-history.php?employee_code=${employeeCode}`;
+
+            console.log('Gọi API:', apiUrl);
+            console.log('Token:', localStorage.getItem('user_token'));
+
+            fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('user_token')}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    console.log('Status:', response.status);
+                    console.log('Headers:', [...response.headers.entries()]);
+
+                    // Kiểm tra content-type
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    } else {
+                        // Nếu không phải JSON, lấy text và hiển thị lỗi
+                        return response.text().then(text => {
+                            console.error('Phản hồi không phải JSON:', text);
+                            throw new Error('Phản hồi từ máy chủ không phải định dạng JSON');
+                        });
+                    }
+                })
+                .then(data => {
+                    console.log('Dữ liệu nhận được:', data);
+                    displaySalaryHistory(data);
+                })
+                .catch(error => {
+                    console.error('Lỗi:', error);
+                    tableBody.innerHTML = `
+        <tr>
+            <td colspan="6" class="no-data">Lỗi khi tải lịch sử lương: ${error.message}</td>
+        </tr>
+        `;
+                });
+        }
+
+
+        // Hàm hiển thị lịch sử lương
+        function displaySalaryHistory(historyData) {
+            const tableBody = document.querySelector('#salaryHistory tbody');
+
+            // Xóa dữ liệu cũ
+            tableBody.innerHTML = '';
+
+            // Định dạng số tiền
+            const formatCurrency = (amount) => {
+                return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+            };
+
+            // Kiểm tra nếu không có dữ liệu
+            if (!historyData || historyData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="no-data">Không có dữ liệu lương</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Hiển thị dữ liệu lương
+            historyData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.employee_code}</td>
+                    <td>${item.employee_name}</td>
+                    <td>${item.month}/${item.year}</td>
+                    <td>${item.hour_worked}</td>
+                    <td>${formatCurrency(item.hourly_wage)}</td>
+                    <td>${formatCurrency(item.total_salary)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Thêm hàm này vào phần script của salary_result.html
+        function loadSchedules() {
+            const userToken = localStorage.getItem('user_token');
+            if (!userToken || !currentEmployeeCode) return;
+
+            fetch(`schedule_backend.php?action=getEmployeeSchedules&employee_code=${currentEmployeeCode}`, {
+                headers: {
+                    'Authorization': `Bearer ${userToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(response => {
+                    if (response.status === 'success' && Array.isArray(response.data)) {
+                        const tbody = document.querySelector('#workTimeTable tbody');
+                        tbody.innerHTML = '';
+
+                        if (response.data.length === 0) {
+                            const row = tbody.insertRow();
+                            const cell = row.insertCell(0);
+                            cell.colSpan = 5;
+                            cell.textContent = 'Không có dữ liệu lịch làm';
+                            return;
+                        }
+
+                        response.data.forEach(schedule => {
+                            const row = tbody.insertRow();
+                            row.insertCell(0).textContent = schedule.employee_code;
+                            row.insertCell(1).textContent = schedule.employee_name;
+                            row.insertCell(2).textContent = formatDate(schedule.work_date);
+                            row.insertCell(3).textContent = schedule.start_time;
+                            row.insertCell(4).textContent = schedule.end_time;
+                        });
+                    } else {
+                        throw new Error(response.message || 'Không thể tải dữ liệu lịch làm');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading schedules:', error);
+                    const tbody = document.querySelector('#workTimeTable tbody');
+                    tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="error-message">
+                    Lỗi khi tải dữ liệu lịch làm: ${error.message}
+                </td>
+            </tr>
+        `;
+                });
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        // Thêm hàm formatDate để định dạng ngày tháng
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+        // Thêm vào cuối file script
+        // Tự động cập nhật dữ liệu mỗi phút
+        setInterval(() => {
+            if (localStorage.getItem('user_token') && currentEmployeeCode) {
+                loadSchedules();
+            }
+        }, 60000);
+
+
+
+        // Khởi tạo trang khi tải xong
+        window.onload = function () {
+            initializePage();
+        };
+    </script>
+</body>
+
+</html>

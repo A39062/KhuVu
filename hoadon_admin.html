@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hóa Đơn</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            overflow: hidden;
+            background-color: #2d6ae4;
+            position: sticky;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: #f2f2f2;
+            background-color: #2d6ae4;
+            /* Đổi thành màu xanh nhạt hơn - giống với màu navbar */
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            /* Thêm hiệu ứng chuyển đổi */
+        }
+
+        .navbar a:hover {
+            background-color: #043493;
+            /* Giữ màu xanh đậm khi hover */
+            color: white;
+            /* Đổi thành màu trắng rõ ràng thay vì #ddd */
+            transition: all 0.3s ease;
+        }
+
+
+        .container {
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        button {
+            background-color: #2d6ae4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #043493;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .close-modal {
+            background-color: red;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            background-color: darkred;
+        }
+
+        .user-info {
+            color: white;
+            padding: 14px 20px;
+            margin-right: 10px;
+        }
+
+        /* Thêm vào phần <style> */
+        .filter-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .filter-group {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .filter-group input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .filter-section button {
+            margin-top: 24px;
+            background-color: #2d6ae4;
+        }
+
+        .filter-section button:hover {
+            background-color: #043493;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <a href="thanhtoan.html">Thanh Toán</a>
+        <a href="hoadon.html">Hóa Đơn</a>
+        <div class="navbar-right">
+            <span id="userStatus" class="user-info"></span>
+            <a href="index.html" class="logout">Đăng xuất</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Danh Sách Hóa Đơn</h2>
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="filterDate">Lọc theo ngày:</label>
+                <input type="date" id="filterDate" onchange="filterByDate()">
+            </div>
+
+
+
+            <button onclick="resetFilter()">Đặt lại</button>
+        </div>
+        <table id="invoiceTable">
+            <thead>
+                <tr>
+                    <th>Mã Hóa Đơn</th>
+                    <th>Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Nội dung sẽ được tải từ server -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal to show invoice details -->
+    <div id="invoiceModal" class="modal">
+        <div class="modal-content">
+            <h2>Chi Tiết Hóa Đơn</h2>
+            <div id="invoiceDetails"></div>
+            <button class="close-modal" onclick="closeInvoiceModal()">Đóng</button>
+        </div>
+    </div>
+
+    <script>
+
+        function checkLoginStatus() {
+            const userToken = localStorage.getItem('user_token');
+            const adminToken = localStorage.getItem('admin_token');
+
+            // Lấy token hiện tại của tab
+            const currentPageToken = sessionStorage.getItem('current_page_token');
+            let token;
+
+            if (!currentPageToken) {
+                // Nếu tab mới, kiểm tra token cuối cùng được sử dụng
+                if (adminToken) {
+                    token = adminToken;
+                    sessionStorage.setItem('current_page_token', 'admin_token');
+                } else if (userToken) {
+                    token = userToken;
+                    sessionStorage.setItem('current_page_token', 'user_token');
+                }
+            } else {
+                // Sử dụng token tương ứng với role đã lưu trong session
+                token = currentPageToken === 'user_token' ? userToken : adminToken;
+            }
+
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('check_session.php', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.loggedIn) {
+                        document.getElementById('userStatus').textContent = `Xin chào: ${data.email}`;
+                        // Lưu email người dùng vào localStorage để sử dụng sau này
+                        localStorage.setItem('user_email', data.email);
+
+                        // Nếu không phải admin, chuyển về trang hóa đơn user
+                        if (data.role !== 'admin') {
+                            window.location.href = 'hoadon.html';
+                        } else {
+                            // Nếu là admin, cập nhật navbar và tải hóa đơn
+                            adjustNavbarByRole('admin');
+                            loadInvoices();
+                        }
+                    } else {
+                        if (currentPageToken === 'admin_token') {
+                            localStorage.removeItem('admin_token');
+                        } else {
+                            localStorage.removeItem('user_token');
+                        }
+                        localStorage.removeItem('user_email');
+                        sessionStorage.removeItem('current_page_token');
+                        window.location.href = 'index.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    sessionStorage.removeItem('current_page_token');
+                    window.location.href = 'index.html';
+                });
+        }
+
+        function adjustNavbarByRole(role) {
+            const navbar = document.querySelector('.navbar');
+            if (role === 'admin') {
+                navbar.innerHTML = `
+            <a href="tongquan.html">Tổng Quan</a>
+            <a href="hanghoa.html">Hàng Hóa</a>
+            <a href="nhanvien1.html">Nhân viên</a>
+            <a href="lichlam1.html">Lịch làm</a>
+            <a href="hoadon_admin.html">Hóa Đơn</a>
+            <div class="navbar-right">
+                <span id="userStatus" class="user-info"></span>
+                <a href="#" class="logout" onclick="handleLogout(event)">Đăng xuất</a>
+            </div>
+        `;
+            } else {
+                navbar.innerHTML = `
+            <a href="thanhtoan.html">Thanh Toán</a>
+            <a href="hoadon.html">Hóa Đơn</a>
+            <div class="navbar-right">
+                <span id="userStatus" class="user-info"></span>
+                <a href="#" class="logout" onclick="handleLogout(event)">Đăng xuất</a>
+            </div>
+        `;
+            }
+
+            // Cập nhật lại thông tin người dùng
+            const userStatus = document.getElementById('userStatus');
+            if (userStatus) {
+                userStatus.textContent = `Xin chào: ${localStorage.getItem('user_email') || ''}`;
+            }
+        }
+
+
+
+
+
+        function handleLogout(event) {
+            event.preventDefault();
+
+            const currentPageToken = sessionStorage.getItem('current_page_token');
+            const token = localStorage.getItem(currentPageToken);
+
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('logout.php', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Xóa cả localStorage và sessionStorage
+                    localStorage.removeItem('admin_token');
+                    localStorage.removeItem('user_token');
+                    localStorage.removeItem('user_email');
+                    sessionStorage.removeItem('current_page_token');
+                    window.location.href = 'index.html';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    // Xóa cả localStorage và sessionStorage
+                    localStorage.removeItem('admin_token');
+                    localStorage.removeItem('user_token');
+                    localStorage.removeItem('user_email');
+                    sessionStorage.removeItem('current_page_token');
+                    window.location.href = 'index.html';
+                });
+        }
+
+
+
+
+        // Load invoices from the database
+        function loadInvoices() {
+            const currentPageToken = sessionStorage.getItem('current_page_token');
+            const token = localStorage.getItem(currentPageToken);
+
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('get_invoices.php', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Received invoices:', data);
+                    const invoiceTable = document.getElementById('invoiceTable');
+
+                    // Cập nhật header bảng
+                    invoiceTable.innerHTML = `
+        <thead>
+            <tr>
+                <th>Mã HĐ</th>
+                <th>Tên hàng hóa</th>
+                <th>Ngày tạo</th>
+                <th>Thời gian tạo</th>
+                <th>Tổng tiền gốc</th>
+                <th>Giảm giá</th>
+                <th>Thành tiền sau giảm</th>
+                <th>Phương thức thanh toán</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    `;
+
+                    const tbody = invoiceTable.getElementsByTagName('tbody')[0];
+                    if (Array.isArray(data)) {
+                        data.forEach(invoice => {
+                            const row = tbody.insertRow();
+                            const discount = parseFloat(invoice.discount) || 0;
+                            const total = parseFloat(invoice.total_amount);
+                            const finalTotal = total;
+
+                            // Format date and time
+                            const date = new Date(invoice.created_at);
+                            const formattedDate = date.toLocaleDateString('vi-VN');
+                            const formattedTime = date.toLocaleTimeString('vi-VN');
+
+                            row.innerHTML = `
+                <td>${invoice.id}</td>
+                <td>${invoice.product_names || 'Không có sản phẩm'}</td>
+                <td>${formattedDate}</td>
+                <td>${formattedTime}</td>
+                <td>${(total / (1 - discount / 100)).toLocaleString('vi-VN')} VNĐ</td>
+                <td>${discount}%</td>
+                <td>${finalTotal.toLocaleString('vi-VN')} VNĐ</td>
+                <td>${invoice.payment_method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}</td>
+                <td><button onclick="viewInvoiceDetails(${invoice.id})">Xem Chi Tiết</button></td>
+            `;
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading invoices:', error);
+                    alert('Có lỗi xảy ra khi tải hóa đơn: ' + error);
+                });
+        }
+
+
+
+        // Thêm hàm để hiển thị chi tiết hóa đơn
+        function viewInvoiceDetails(invoiceId) {
+            const currentPageToken = sessionStorage.getItem('current_page_token');
+            const token = localStorage.getItem(currentPageToken);
+
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch(`get_invoice_details.php?id=${invoiceId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const modal = document.getElementById('invoiceModal');
+                    const modalContent = modal.querySelector('.modal-content');
+                    const date = new Date(data.invoice.date);
+
+                    modalContent.innerHTML = `
+        <h2>Chi Tiết Hóa Đơn #${data.invoice.id}</h2>
+        <div id="invoiceDetails">
+            <p><strong>Ngày tạo:</strong> ${date.toLocaleString('vi-VN')}</p>
+            <p><strong>Giảm giá:</strong> ${data.invoice.discount}%</p>
+            <p><strong>Phương thức thanh toán:</strong> ${data.invoice.payment_method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tên sản phẩm</th>
+                        <th>Số lượng</th>
+                        <th>Đơn giá</th>
+                        <th>Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.items.map(item => `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${item.quantity}</td>
+                            <td>${parseInt(item.price).toLocaleString('vi-VN')} VNĐ</td>
+                            <td>${(item.quantity * item.price).toLocaleString('vi-VN')} VNĐ</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            <p class="total"><strong>Tổng tiền gốc:</strong> ${(parseFloat(data.invoice.total_amount) / (1 - data.invoice.discount / 100)).toLocaleString('vi-VN')} VNĐ</p>
+            <p class="total"><strong>Thành tiền sau giảm:</strong> ${parseFloat(data.invoice.total_amount).toLocaleString('vi-VN')} VNĐ</p>
+        </div>
+        <button class="close-modal" onclick="document.getElementById('invoiceModal').style.display='none'">Đóng</button>
+    `;
+
+                    modal.style.display = 'flex';
+                })
+                .catch(error => alert('Có lỗi xảy ra khi xem chi tiết hóa đơn: ' + error));
+        }
+
+
+
+        function closeInvoiceModal() {
+            document.getElementById('invoiceModal').style.display = 'none';
+        }
+
+        // Thêm vào phần <script>
+        function filterByDate() {
+            const selectedDate = document.getElementById('filterDate').value;
+            const currentPageToken = sessionStorage.getItem('current_page_token');
+            const token = localStorage.getItem(currentPageToken);
+
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            if (!selectedDate) {
+                loadInvoices();
+                return;
+            }
+
+            fetch(`get_invoices.php?filter_type=date&date=${selectedDate}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => updateInvoiceTable(data))
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi lọc hóa đơn');
+                });
+        }
+
+
+
+
+        function resetFilter() {
+            document.getElementById('filterDate').value = '';
+            loadInvoices(); // Tải lại tất cả hóa đơn
+        }
+
+        function updateInvoiceTable(data) {
+            const invoiceTable = document.getElementById('invoiceTable');
+
+            invoiceTable.innerHTML = `
+        <thead>
+            <tr>
+                <th>Mã HĐ</th>
+                <th>Tên hàng hóa</th>
+                <th>Ngày tạo</th>
+                <th>Thời gian tạo</th>
+                <th>Tổng tiền gốc</th>
+                <th>Giảm giá</th>
+                <th>Thành tiền sau giảm</th>
+                <th>Phương thức thanh toán</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    `;
+
+            const tbody = invoiceTable.getElementsByTagName('tbody')[0];
+
+            if (Array.isArray(data) && data.length > 0) {
+                data.forEach(invoice => {
+                    const row = tbody.insertRow();
+                    const discount = parseFloat(invoice.discount) || 0;
+                    const total = parseFloat(invoice.total_amount);
+                    const finalTotal = total;
+
+                    // Format date and time
+                    const date = new Date(invoice.created_at);
+                    const formattedDate = date.toLocaleDateString('vi-VN');
+                    const formattedTime = date.toLocaleTimeString('vi-VN');
+
+                    row.innerHTML = `
+                <td>${invoice.id}</td>
+                <td>${invoice.product_names || 'Không có sản phẩm'}</td>
+                <td>${formattedDate}</td>
+                <td>${formattedTime}</td>
+                <td>${(total / (1 - discount / 100)).toLocaleString('vi-VN')} VNĐ</td>
+                <td>${discount}%</td>
+                <td>${finalTotal.toLocaleString('vi-VN')} VNĐ</td>
+                <td>${invoice.payment_method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}</td>
+                <td><button onclick="viewInvoiceDetails(${invoice.id})">Xem Chi Tiết</button></td>
+            `;
+                });
+            } else {
+                const row = tbody.insertRow();
+                row.innerHTML = '<td colspan="9" style="text-align: center;">Không tìm thấy hóa đơn nào</td>';
+            }
+        }
+
+
+        // Modify the window.onload function
+        window.onload = function () {
+            checkLoginStatus();
+            // loadInvoices() sẽ được gọi sau khi checkLoginStatus() hoàn thành
+        }
+
+
+    </script>
+
+</body>
+
+</html>

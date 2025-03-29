@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Hàng Hóa</title>
+    <style>
+        /* CSS cho thanh điều hướng */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            overflow: hidden;
+            background-color: #2d6ae4;
+            position: sticky;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #043493;
+            color: #ddd;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-right a {
+            padding: 14px 20px;
+            margin-left: 10px;
+        }
+
+        .logout {
+            background-color: #2d6ae4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .logout:hover {
+            background-color: #043493;
+        }
+
+        .user-info {
+            color: #ffffff !important;
+            padding: 14px 20px;
+            margin-right: 10px;
+        }
+
+        /* CSS cho bố cục chính */
+        .container {
+            display: flex;
+            padding: 20px;
+        }
+
+        .left-column {
+            flex: 1;
+            margin-right: 20px;
+        }
+
+        .right-column {
+            flex: 3;
+        }
+
+        /* CSS cho bảng */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        /* CSS cho nút thêm */
+        button {
+            background-color: #2d6ae4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #043493;
+        }
+
+        /* CSS cho form */
+        form {
+            margin-bottom: 20px;
+        }
+
+        /* Thiết lập cho phần thêm hàng hóa */
+        .product-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .product-form input[type="text"],
+        .product-form input[type="number"],
+        .product-form select {
+            flex: 1 1 150px;
+            /* Tạo các ô nhập dữ liệu co giãn */
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .product-form button {
+            flex: 1 1 100px;
+            /* Nút thêm hàng hóa */
+        }
+
+        .search-filters {
+            margin: 20px 0;
+        }
+
+        .search-filters form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-filters input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .search-filters input[type="number"] {
+            width: 120px;
+        }
+
+        .search-filters button {
+            padding: 8px 15px;
+        }
+
+        .search-filters button {
+            padding: 8px 15px;
+            margin-right: 5px;
+        }
+
+        .search-filters button:last-child {
+            background-color: #375ca5;
+            /* Màu xanh lá cho nút "Tất cả" */
+        }
+
+        .search-filters button:last-child:hover {
+            background-color: #043493;
+            /* Màu xanh lá cho nút "Tất cả" */
+        }
+
+        #cancelButton {
+            background-color: #dc3545;
+            margin-left: 10px;
+        }
+
+        #cancelButton:hover {
+            background-color: #c82333;
+        }
+
+        .product-form h2 {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Thanh Điều Hướng -->
+    <div class="navbar">
+        <a href="tongquan.html">Tổng Quan</a>
+        <a href="hanghoa.html">Hàng Hóa</a>
+        <a href="nhanvien1.html">Nhân viên</a>
+        <a href="lichlam1.html">Lịch làm</a>
+        <a href="hoadon_admin.html">Hóa Đơn</a>
+
+        <div class="navbar-right">
+            <span id="userStatus" class="user-info"></span>
+            <a href="index.html" class="logout">Đăng xuất</a>
+        </div>
+    </div>
+
+
+
+    <div class="container">
+        <!-- Cột bên trái: Thêm nhóm hàng và danh sách nhóm hàng -->
+        <div class="left-column">
+            <h2>Thêm Nhóm Hàng</h2>
+            <form id="addCategoryForm">
+                <input type="text" id="categoryName" placeholder="Tên nhóm hàng" required>
+                <button type="submit">Thêm Nhóm Hàng</button>
+            </form>
+
+            <h2>Danh Sách Nhóm Hàng</h2>
+            <table id="categoryTable">
+                <thead>
+                    <tr>
+                        <th>Tên Nhóm Hàng</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Nội dung bảng sẽ được nạp từ server -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Cột bên phải: Thêm hàng hóa và danh sách hàng hóa -->
+        <div class="right-column">
+            <h2 id="formTitle">Thêm Hàng Hóa</h2>
+            <form id="addProductForm" class="product-form">
+                <select id="categorySelect" required></select>
+                <input type="text" id="productCode" placeholder="Mã hàng" required>
+                <input type="text" id="productName" placeholder="Tên hàng" required>
+                <input type="number" id="salePrice" placeholder="Giá bán" step="0.01" required>
+                <input type="number" id="costPrice" placeholder="Giá vốn" step="0.01" required>
+                <input type="number" id="quantity" placeholder="Số lượng" required>
+                <button type="submit" id="submitButton">Thêm Hàng Hóa</button>
+                <button type="button" id="cancelButton" style="display: none; background-color: #dc3545;">Hủy</button>
+            </form>
+
+            <h2>Danh Sách Hàng Hóa</h2>
+            <label for="filterCategory">Lọc theo nhóm hàng:</label>
+            <select id="filterCategory" onchange="filterProductsByCategory()">
+                <option value="">Tất cả</option>
+                <!-- Các tùy chọn nhóm hàng sẽ được nạp từ server -->
+            </select>
+            <div class="search-filters">
+                <form onsubmit="event.preventDefault(); searchProducts();">
+                    <input type="text" id="searchCode" placeholder="Tìm kiếm theo mã sản phẩm">
+                    <input type="text" id="searchName" placeholder="Tìm kiếm theo tên">
+                    <input type="number" id="minPrice" placeholder="Giá tối thiểu">
+                    <input type="number" id="maxPrice" placeholder="Giá tối đa">
+                    <button type="button" onclick="searchProducts()">Tìm kiếm</button>
+                    <button type="button" onclick="showAllProducts()">Tất cả</button>
+                </form>
+            </div>
+            <table id="productTable">
+                <thead>
+                    <tr>
+                        <th>Mã Hàng</th>
+                        <th>Tên Hàng</th>
+                        <th>Giá Bán</th>
+                        <th>Giá Vốn</th>
+                        <th>Số Lượng</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Nội dung bảng sẽ được nạp từ server -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+
+
+        function showAllProducts() {
+            // Xóa tất cả các giá trị tìm kiếm
+            document.getElementById('searchCode').value = '';
+            document.getElementById('searchName').value = '';
+            document.getElementById('minPrice').value = '';
+            document.getElementById('maxPrice').value = '';
+            document.getElementById('filterCategory').value = '';
+
+            // Tải lại tất cả sản phẩm
+            fetch('get_products.php')
+                .then(response => response.json())
+                .then(data => {
+                    const productTable = document.getElementById('productTable').getElementsByTagName('tbody')[0];
+                    productTable.innerHTML = '';
+
+                    data.forEach(product => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${product.code}</td>
+                            <td>${product.name}</td>
+                            <td>${product.sale_price}</td>
+                            <td>${product.cost_price}</td>
+                            <td>${product.quantity}</td>
+                            <td>
+                                <button onclick="editProduct(${product.code})">Sửa</button>
+                                <button onclick="deleteProduct(${product.id})">Xóa</button>
+                            </td>
+                        `;
+                        productTable.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading products:', error);
+                });
+        }
+
+        // Thêm vào đầu file script
+        function checkLoginStatus() {
+            const adminToken = localStorage.getItem('admin_token');
+
+            if (!adminToken) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('check_session.php', {
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.loggedIn && data.role === 'admin') {
+                        document.getElementById('userStatus').textContent = `Xin chào: ${data.email}`;
+                    } else {
+                        localStorage.removeItem('admin_token');
+                        window.location.href = 'index.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function handleLogout(event) {
+            event.preventDefault();
+            const adminToken = localStorage.getItem('admin_token');
+
+            if (!adminToken) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('logout.php', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    localStorage.removeItem('admin_token');
+                    window.location.href = 'index.html';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    localStorage.removeItem('admin_token');
+                    window.location.href = 'index.html';
+                });
+        }
+
+        // Gọi checkLoginStatus khi tải trang
+        checkLoginStatus();
+
+        // Nạp danh sách nhóm hàng từ server
+        function loadCategories() {
+            fetch('get_categories.php')
+                .then(response => response.json())
+                .then(data => {
+                    const categorySelect = document.getElementById('categorySelect');
+                    const filterCategory = document.getElementById('filterCategory');
+                    const categoryTable = document.getElementById('categoryTable').getElementsByTagName('tbody')[0];
+
+                    categorySelect.innerHTML = '';
+                    filterCategory.innerHTML = '<option value="">Tất cả</option>';
+                    categoryTable.innerHTML = '';
+
+                    data.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        categorySelect.appendChild(option);
+
+                        const filterOption = document.createElement('option');
+                        filterOption.value = category.id;
+                        filterOption.textContent = category.name;
+                        filterCategory.appendChild(filterOption);
+
+                        const row = categoryTable.insertRow();
+                        row.insertCell(0).textContent = category.name;
+                        const actionCell = row.insertCell(1);
+                        actionCell.innerHTML = `
+                            <button onclick="editCategory(${category.id}, '${category.name}')">Sửa</button>
+                            <button onclick="deleteCategory(${category.id})">Xóa</button>
+                        `;
+                    });
+
+                    // Nạp hàng hóa theo nhóm hàng được chọn (nếu có)
+                    filterProductsByCategory();
+                })
+                .catch(error => alert('Có lỗi xảy ra khi nạp danh sách nhóm hàng: ' + error));
+        }
+
+        // Nạp danh sách hàng hóa từ server
+        function loadProducts(categoryId = '') {
+            fetch('get_products.php' + (categoryId ? `?category_id=${categoryId}` : ''))
+                .then(response => response.json())
+                .then(data => {
+                    const productTable = document.getElementById('productTable').getElementsByTagName('tbody')[0];
+                    productTable.innerHTML = '';
+
+                    data.forEach(product => {
+                        const row = productTable.insertRow();
+                        row.insertCell(0).textContent = product.code;
+                        row.insertCell(1).textContent = product.name;
+                        row.insertCell(2).textContent = product.sale_price;
+                        row.insertCell(3).textContent = product.cost_price;
+                        row.insertCell(4).textContent = product.quantity;
+                        const actionCell = row.insertCell(5);
+                        actionCell.innerHTML = `
+                            <button onclick="editProduct('${product.code}')">Sửa</button>
+                            <button onclick="deleteProduct(${product.id})">Xóa</button>
+                        `;
+                    });
+
+                })
+                .catch(error => alert('Có lỗi xảy ra khi nạp danh sách hàng hóa: ' + error));
+        }
+
+        // Lọc hàng hóa theo nhóm hàng
+        function filterProductsByCategory() {
+            const categoryId = document.getElementById('filterCategory').value;
+            loadProducts(categoryId);
+        }
+        function searchProducts() {
+            const searchCode = document.getElementById('searchCode').value;
+            const searchName = document.getElementById('searchName').value;
+            const minPrice = document.getElementById('minPrice').value;
+            const maxPrice = document.getElementById('maxPrice').value;
+            const categoryId = document.getElementById('filterCategory').value;
+
+            fetch(`get_products.php?category_id=${categoryId}&search_code=${searchCode}&search_name=${searchName}&min_price=${minPrice}&max_price=${maxPrice}`)
+                .then(response => response.json())
+                .then(data => {
+                    const productTable = document.getElementById('productTable').getElementsByTagName('tbody')[0];
+                    productTable.innerHTML = '';
+
+                    data.forEach(product => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                    <td>${product.code}</td>
+                    <td>${product.name}</td>
+                    <td>${product.sale_price}</td>
+                    <td>${product.cost_price}</td>
+                    <td>${product.quantity}</td>
+                    <td>
+                        <button onclick="editProduct(${product.id})">Sửa</button>
+                        <button onclick="deleteProduct(${product.id})">Xóa</button>
+                    </td>
+                `;
+                        productTable.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading products:', error);
+                });
+        }
+
+
+
+
+        // Xử lý thêm nhóm hàng
+        document.getElementById('addCategoryForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const name = document.getElementById('categoryName').value;
+
+            fetch('add_category.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        loadCategories();
+                        document.getElementById('categoryName').value = '';
+                    } else {
+                        alert('Lỗi: ' + data.message);
+                    }
+                })
+                .catch(error => alert('Có lỗi xảy ra khi thêm nhóm hàng: ' + error));
+        });
+
+
+        // Xóa nhóm hàng
+        function deleteCategory(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa nhóm hàng này? CẢNH BÁO: Tất cả các mặt hàng trong nhóm này cũng sẽ bị xóa!')) {
+                fetch('delete_category.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert('Đã xóa nhóm hàng và tất cả mặt hàng liên quan thành công!');
+                            loadCategories(); // Tải lại danh sách nhóm hàng
+                            loadProducts(); // Tải lại danh sách sản phẩm
+                        } else {
+                            alert('Lỗi: ' + data.message);
+                        }
+                    })
+                    .catch(error => alert('Có lỗi xảy ra khi xóa nhóm hàng: ' + error));
+            }
+        }
+
+
+        // Xóa hàng hóa
+        function deleteProduct(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa hàng hóa này không?')) {
+                fetch('delete_product.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            filterProductsByCategory();
+                        } else {
+                            alert('Lỗi: ' + data.message);
+                        }
+                    })
+                    .catch(error => alert('Có lỗi xảy ra khi xóa hàng hóa: ' + error));
+            }
+        }
+
+        // Sửa nhóm hàng
+        function editCategory(id, currentName) {
+            const newName = prompt("Nhập tên mới cho nhóm hàng:", currentName);
+            if (newName && newName !== currentName) {
+                fetch('edit_category.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, name: newName })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            loadCategories();
+                        } else {
+                            alert('Lỗi: ' + data.message);
+                        }
+                    })
+                    .catch(error => alert('Có lỗi xảy ra khi sửa nhóm hàng: ' + error));
+            }
+        }
+
+        // Sửa hàng hóa
+        function editProduct(productCode) {
+            fetch(`get_products.php?code=${productCode}`)
+                .then(response => response.json())
+                .then(products => {
+                    if (!Array.isArray(products) || products.length === 0) {
+                        throw new Error('Không tìm thấy sản phẩm');
+                    }
+                    const product = products[0];
+
+                    // Điền thông tin vào form
+                    document.getElementById('categorySelect').value = product.category_id;
+                    document.getElementById('productCode').value = product.code;
+                    document.getElementById('productName').value = product.name;
+                    document.getElementById('salePrice').value = product.sale_price;
+                    document.getElementById('costPrice').value = product.cost_price;
+                    document.getElementById('quantity').value = product.quantity;
+
+                    // Làm cho mã code không thể sửa
+                    document.getElementById('productCode').readOnly = true;
+
+                    // Đổi tiêu đề form
+                    document.getElementById('formTitle').textContent = 'Sửa Hàng Hóa';
+
+                    // Đổi text nút submit
+                    const submitButton = document.getElementById('submitButton');
+                    submitButton.textContent = 'Cập Nhật';
+                    document.getElementById('cancelButton').style.display = 'inline-block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi lấy thông tin sản phẩm: ' + error.message);
+                });
+        }
+
+        // Thêm xử lý sự kiện cho nút hủy
+        document.getElementById('cancelButton').addEventListener('click', function () {
+            // Reset form
+            document.getElementById('addProductForm').reset();
+
+            // Đổi lại tiêu đề form
+            document.getElementById('formTitle').textContent = 'Thêm Hàng Hóa';
+
+            const submitButton = document.getElementById('submitButton');
+            if (submitButton) {
+                submitButton.textContent = 'Thêm Hàng Hóa';
+            }
+            document.getElementById('cancelButton').style.display = 'none';
+
+            // Cho phép sửa mã code
+            document.getElementById('productCode').readOnly = false;
+        });
+
+
+
+
+        // Sửa lại hàm xử lý form thêm/sửa hàng hóa
+        document.getElementById('addProductForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const formData = {
+                category_id: parseInt(document.getElementById('categorySelect').value, 10),
+                code: document.getElementById('productCode').value,
+                name: document.getElementById('productName').value,
+                sale_price: parseFloat(document.getElementById('salePrice').value),
+                cost_price: parseFloat(document.getElementById('costPrice').value),
+                quantity: parseInt(document.getElementById('quantity').value, 10)
+            };
+
+            const isEditing = document.querySelector('#addProductForm button[type="submit"]').textContent === 'Cập Nhật';
+            const url = isEditing ? 'edit_product.php' : 'add_product.php';
+
+            // Thêm console.log để debug
+            console.log('Form Data:', formData);
+            console.log('Is Editing:', isEditing);
+            console.log('URL:', url);
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error('Server response: ' + text);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(isEditing ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
+                        // Cập nhật lại bảng sản phẩm
+                        document.getElementById('addProductForm').reset();
+                        document.getElementById('formTitle').textContent = 'Thêm Hàng Hóa';
+                        document.getElementById('submitButton').textContent = 'Thêm Hàng Hóa';
+                        document.getElementById('cancelButton').style.display = 'none';
+                        document.getElementById('productCode').readOnly = false;
+
+                        // Cập nhật lại bảng sản phẩm
+                        filterProductsByCategory();
+                    } else {
+                        throw new Error(data.message || 'Có lỗi xảy ra');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra: ' + error.message);
+                });
+        });
+
+
+
+
+
+        // Nạp danh sách nhóm hàng và hàng hóa khi tải trang
+        loadCategories();
+    </script>
+
+</body>
+
+</html>

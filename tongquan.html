@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tổng Quan</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            overflow: hidden;
+            background-color: #2d6ae4;
+            position: sticky;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #043493;
+            color: #ddd;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-right a {
+            padding: 14px 20px;
+            margin-left: 10px;
+        }
+
+        .logout {
+            background-color: #2d6ae4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .logout:hover {
+            background-color: #043493;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .chart-container {
+            width: 100%;
+            margin: 30px auto;
+        }
+
+        .user-info {
+            color: white !important;
+            padding: 14px 20px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <a href="tongquan.html">Tổng Quan</a>
+        <a href="hanghoa.html">Hàng Hóa</a>
+        <a href="nhanvien1.html">Nhân viên</a>
+        <a href="lichlam1.html">Lịch làm</a>
+        <a href="hoadon_admin.html">Hóa Đơn</a>
+        <div class="navbar-right">
+            <span id="userStatus" class="user-info"></span>
+            <a href="#" class="logout" onclick="handleLogout(event)">Đăng xuất</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Thống Kê Doanh Thu Theo Ngày</h1>
+        <div class="chart-container">
+            <canvas id="revenueChart"></canvas>
+        </div>
+
+        <h2>Top 10 Sản Phẩm Bán Chạy</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sản Phẩm</th>
+                    <th>Số Lượng Bán</th>
+                </tr>
+            </thead>
+            <tbody id="topProductsTable">
+                <!-- Nội dung sẽ được tải từ server -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Fetch daily revenue data and render chart
+        fetch('get_revenue.php')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('revenueChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels,  // Dates
+                        datasets: [{
+                            label: 'Doanh Thu (VND)',
+                            data: data.revenue,  // Revenue values
+                            backgroundColor: 'rgba(255, 182, 193, 0.7)',  // Light pink
+                            borderColor: 'rgba(255, 105, 180, 1)',  // Darker pink
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Ngày'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Doanh Thu (VND)'
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.log('Lỗi tải dữ liệu doanh thu:', error));
+
+        // Fetch top products data and render table
+        fetch('get_top_products.php')
+            .then(response => response.json())
+            .then(data => {
+                const topProductsTable = document.getElementById('topProductsTable');
+                topProductsTable.innerHTML = '';
+
+                data.forEach(product => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${product.name}</td><td>${product.total_sold}</td>`;
+                    topProductsTable.appendChild(row);
+                });
+            })
+            .catch(error => console.log('Lỗi tải danh sách sản phẩm:', error));
+
+        // Kiểm tra token và hiển thị email admin
+        function checkLoginStatus() {
+            const adminToken = localStorage.getItem('admin_token');
+
+            if (!adminToken) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('check_session.php', {
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.loggedIn && data.role === 'admin') {
+                        document.getElementById('userStatus').textContent = `Xin chào: ${data.email}`;
+                    } else {
+                        localStorage.removeItem('admin_token');
+                        window.location.href = 'index.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        // Gọi hàm khi tải trang
+        checkLoginStatus();
+
+        // Xử lý đăng xuất
+        function handleLogout(event) {
+            event.preventDefault();
+            const adminToken = localStorage.getItem('admin_token');
+
+            if (!adminToken) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('logout.php', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    localStorage.removeItem('admin_token');
+                    window.location.href = 'index.html';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    localStorage.removeItem('admin_token');
+                    window.location.href = 'index.html';
+                });
+        }
+    </script>
+
+</body>
+
+</html>
