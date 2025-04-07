@@ -506,6 +506,13 @@
         #resetButton:hover {
             background-color: #e0e0e0;
         }
+
+        #qr-code-container img {
+            width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
     </style>
 </head>
 
@@ -595,6 +602,10 @@
                     </div>
                 </div>
             </div>
+            <div id="qr-code-container" class="payment-method-container" style="display: none; margin-top: 10px;">
+                <img src="img/qr.jpg" alt="QR chuyển khoản"
+                    style="width: 100%; height: 350px; border: 1px solid #ccc; border-radius: 8px;">
+            </div>
 
             <p id="totalAmount">Tổng tiền: 0 VNĐ</p>
             <button class="checkout" onclick="checkout()">Thanh Toán</button>
@@ -616,6 +627,24 @@
         // Biến lưu trữ danh sách sản phẩm gốc
         let allProducts = [];
         let cart = [];
+
+        const qrContainer = document.getElementById('qr-code-container');
+        const cash = document.getElementById('cash');
+        const transfer = document.getElementById('transfer');
+
+        // Khi chọn "Chuyển khoản"
+        transfer.addEventListener('change', () => {
+            if (transfer.checked) {
+                qrContainer.style.display = 'block';
+            }
+        });
+
+        // Khi chọn lại "Tiền mặt"
+        cash.addEventListener('change', () => {
+            if (cash.checked) {
+                qrContainer.style.display = 'none';
+            }
+        });
         // Sửa lại hàm loadProducts để lưu trữ danh sách sản phẩm gốc
         function loadProducts() {
             fetch('get_products.php')

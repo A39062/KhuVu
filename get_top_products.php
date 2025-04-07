@@ -1,33 +1,41 @@
 <?php
-// Database connection
-$conn = new mysqli('localhost', 'root', '', 'user_db');
+header('Content-Type: application/json');
 
-// Check connection
+// Kết nối DB
+$conn = new mysqli('localhost', 'root', '', 'user_db');
 if ($conn->connect_error) {
     die(json_encode(['status' => 'error', 'message' => 'Connection failed: ' . $conn->connect_error]));
 }
 
-// Fetch the top 10 best-selling products
+// Lấy tháng từ query string (ví dụ: 2024-04)
+$month = isset($_GET['month']) ? $_GET['month'] : date('Y-m');
+
+// Truy vấn top 10 sản phẩm bán chạy trong tháng
 $query = "
-    SELECT p.name, SUM(hi.quantity) AS total_sold
-    FROM hoadon_items hi
-    JOIN products p ON hi.product_id = p.id
-    GROUP BY p.name
+    SELECT 
+        p.name, 
+        SUM(oi.quantity) AS total_sold
+    FROM orders o
+    JOIN order_items oi ON o.id = oi.order_id
+    JOIN products p ON oi.product_id = p.id
+    WHERE DATE_FORMAT(o.created_at, '%Y-%m') = ?
+    GROUP BY p.id
     ORDER BY total_sold DESC
-    LIMIT 10
+    LIMIT 10;
 ";
 
-$result = $conn->query($query);
+// Chuẩn bị và bind tham số
+$stmt = $conn->prepare($query);
+$stmt->bind_param("s", $month);
+$stmt->execute();
+$result = $stmt->get_result();
 
 $topProducts = [];
-if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $topProducts[] = $row;
-    }
+while ($row = $result->fetch_assoc()) {
+    $topProducts[] = $row;
 }
 
-// Output as JSON
 echo json_encode($topProducts);
 
-// Close connection
+$stmt->close();
 $conn->close();

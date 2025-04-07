@@ -121,6 +121,26 @@
         </div>
 
         <h2>Top 10 Sản Phẩm Bán Chạy</h2>
+
+        <label for="monthSelect">Chọn tháng:</label>
+        <select id="monthSelect">
+            <option value="01">01</option>
+            <option value="02">02</option>
+            <option value="03">03</option>
+            <option value="04">04</option>
+            <option value="05">05</option>
+            <option value="06">06</option>
+            <option value="07">07</option>
+            <option value="08">08</option>
+            <option value="09">09</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+        </select>
+
+        <label for="yearSelect">Chọn năm:</label>
+        <select id="yearSelect"></select>
+
         <table>
             <thead>
                 <tr>
@@ -132,6 +152,7 @@
                 <!-- Nội dung sẽ được tải từ server -->
             </tbody>
         </table>
+
     </div>
 
     <script>
@@ -145,7 +166,7 @@
                     data: {
                         labels: data.labels,  // Dates
                         datasets: [{
-                            label: 'Doanh Thu (VND)',
+                            label: 'Doanh Thu',
                             data: data.revenue,  // Revenue values
                             backgroundColor: 'rgba(255, 182, 193, 0.7)',  // Light pink
                             borderColor: 'rgba(255, 105, 180, 1)',  // Darker pink
@@ -164,7 +185,7 @@
                                 beginAtZero: true,
                                 title: {
                                     display: true,
-                                    text: 'Doanh Thu (VND)'
+                                    text: 'Doanh Thu (Triệu VND)'
                                 }
                             }
                         }
@@ -173,20 +194,56 @@
             })
             .catch(error => console.log('Lỗi tải dữ liệu doanh thu:', error));
 
-        // Fetch top products data and render table
-        fetch('get_top_products.php')
-            .then(response => response.json())
-            .then(data => {
-                const topProductsTable = document.getElementById('topProductsTable');
-                topProductsTable.innerHTML = '';
 
-                data.forEach(product => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `<td>${product.name}</td><td>${product.total_sold}</td>`;
-                    topProductsTable.appendChild(row);
-                });
-            })
-            .catch(error => console.log('Lỗi tải danh sách sản phẩm:', error));
+        // Hàm để lấy năm hiện tại và điền vào select
+        function populateYears() {
+            const yearSelect = document.getElementById('yearSelect');
+            const currentYear = new Date().getFullYear();
+
+            for (let year = currentYear; year >= currentYear - 10; year--) {
+                let option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+        }
+
+        // Hàm gọi API theo tháng & năm
+        function fetchTopProducts() {
+            const month = document.getElementById('monthSelect').value;
+            const year = document.getElementById('yearSelect').value;
+            const selectedDate = `${year}-${month}`;
+
+            fetch(`get_top_products.php?month=${selectedDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const topProductsTable = document.getElementById('topProductsTable');
+                    topProductsTable.innerHTML = '';
+
+                    if (data.length === 0) {
+                        topProductsTable.innerHTML = `<tr><td colspan="2">Không có dữ liệu trong tháng này</td></tr>`;
+                        return;
+                    }
+
+                    data.forEach(product => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${product.name}</td><td>${product.total_sold}</td>`;
+                        topProductsTable.appendChild(row);
+                    });
+                })
+                .catch(error => console.log('Lỗi tải danh sách sản phẩm:', error));
+        }
+
+        // Khi người dùng thay đổi tháng hoặc năm, gọi API mới
+        document.getElementById('monthSelect').addEventListener('change', fetchTopProducts);
+        document.getElementById('yearSelect').addEventListener('change', fetchTopProducts);
+
+        // Chạy khi trang load
+        window.onload = function () {
+            populateYears();
+            fetchTopProducts();
+        };
+
 
         // Kiểm tra token và hiển thị email admin
         function checkLoginStatus() {
