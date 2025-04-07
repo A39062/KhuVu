@@ -24,7 +24,10 @@ if (isset($_GET['code'])) {
     $min_price = isset($_GET['min_price']) && $_GET['min_price'] !== '' ? floatval($_GET['min_price']) : null;
     $max_price = isset($_GET['max_price']) && $_GET['max_price'] !== '' ? floatval($_GET['max_price']) : null;
 
-    $sql = "SELECT * FROM products WHERE 1=1";
+    // Trong file get_products.php
+    $sql = "SELECT * FROM products WHERE is_active = 1";
+    $result = $conn->query($sql);
+
 
     if ($category_id > 0) {
         $sql .= " AND category_id = $category_id";

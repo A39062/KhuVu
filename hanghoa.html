@@ -572,13 +572,19 @@
         }
 
 
-        // Xóa hàng hóa
+        // Xóa sản phẩm
+
         function deleteProduct(id) {
-            if (confirm('Bạn có chắc chắn muốn xóa hàng hóa này không?')) {
+            if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?')) {
+                if (id === null) {
+                    alert('ID không hợp lệ');
+                    return;
+                }
+
                 fetch('delete_product.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id })
+                    body: JSON.stringify({ id: id }),
                 })
                     .then(response => response.json())
                     .then(data => {
@@ -591,6 +597,9 @@
                     .catch(error => alert('Có lỗi xảy ra khi xóa hàng hóa: ' + error));
             }
         }
+
+
+
 
         // Sửa nhóm hàng
         function editCategory(id, currentName) {
@@ -690,20 +699,20 @@
 
             const isEditing = document.querySelector('#addProductForm button[type="submit"]').textContent === 'Cập Nhật';
 
-            // Kiểm tra trùng tên sản phẩm
+            // Kiểm tra trùng tên sản phẩm hoặc mã với sản phẩm active
             fetch('check_product_exists.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: formData.name,
                     code: formData.code,
-                    excludeCode: isEditing ? formData.code : null // Để không kiểm tra trùng với chính nó khi đang sửa
+                    excludeCode: isEditing ? formData.code : null
                 })
             })
                 .then(response => response.json())
                 .then(data => {
                     if (data.exists) {
-                        alert('Sản phẩm với tên này hoặc mã này đã tồn tại! Vui lòng chọn tên/mã khác.');
+                        alert('Sản phẩm với tên hoặc mã này đã tồn tại và đang hoạt động! Vui lòng chọn tên/mã khác.');
                         return;
                     }
 
@@ -727,7 +736,7 @@
                         })
                         .then(data => {
                             if (data.status === 'success') {
-                                alert(isEditing ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
+                                alert(data.message || (isEditing ? 'Cập nhật thành công!' : 'Thêm mới thành công!'));
                                 document.getElementById('addProductForm').reset();
                                 document.getElementById('formTitle').textContent = 'Thêm Hàng Hóa';
                                 document.getElementById('submitButton').textContent = 'Thêm Hàng Hóa';

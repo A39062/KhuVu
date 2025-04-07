@@ -40,7 +40,7 @@ try {
     $stmt->close();
 
     // 2. Xóa các mục trong hoadon_items liên quan đến sản phẩm của nhóm hàng này
-    $sql = "DELETE FROM hoadon_items WHERE product_id IN (SELECT id FROM products WHERE category_id = ?)";
+    $sql = "DELETE FROM order_items WHERE product_id IN (SELECT id FROM products WHERE category_id = ?)";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         throw new Exception('Lỗi chuẩn bị câu lệnh xóa hoadon items: ' . $conn->error);
