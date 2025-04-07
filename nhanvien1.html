@@ -391,24 +391,40 @@
 
         // Xóa tài khoản
         function deleteAccount(id) {
+            if (!id) {
+                alert('ID không hợp lệ');
+                return;
+            }
+
             if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
                 fetch('delete_account.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: parseInt(id) })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id: id })
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
-                            loadAccounts();
                             alert('Đã xóa tài khoản thành công');
+                            loadAccounts(); // Tải lại danh sách
                         } else {
-                            alert('Lỗi: ' + data.message);
+                            alert('Lỗi: ' + (data.message || 'Không thể xóa tài khoản'));
                         }
                     })
-                    .catch(error => alert('Có lỗi xảy ra khi xóa tài khoản: ' + error));
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Có lỗi xảy ra khi xóa tài khoản: ' + error.message);
+                    });
             }
         }
+
 
         // Thêm các hàm mới để xử lý sửa trực tiếp
         function enableEdit(row) {
