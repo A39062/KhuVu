@@ -28,69 +28,142 @@ if ($result->num_rows == 1) {
     $user = $result->fetch_assoc();
 
     $token = bin2hex(random_bytes(32));
-    $updateSql = "UPDATE users SET auth_token = ?, is_online = 1 WHERE id = ?";
-    $updateStmt = $conn->prepare($updateSql);
-    $updateStmt->bind_param("si", $token, $user['id']);
-    $updateStmt->execute();
 
+    // Kiểm tra vai trò của người dùng
     if ($user['role'] == 'user') {
-        $currentTime = date('Y-m-d H:i:s');
+        $currentDate = date('Y-m-d');
 
-        // Kiểm tra xem đã có bản ghi nào cho ngày hôm nay chưa
-        $checkSql = "SELECT id, logout_time FROM work_times 
-                     WHERE employee_code = ? 
-                     AND DATE(login_time) = CURDATE()
-                     ORDER BY login_time DESC
-                     LIMIT 1";
-        $checkStmt = $conn->prepare($checkSql);
-        $checkStmt->bind_param("s", $user['employee_code']);
-        $checkStmt->execute();
-        $checkResult = $checkStmt->get_result();
+        // Kiểm tra xem có lịch làm việc cho ngày hôm nay không
+        $scheduleSql = "SELECT work_date FROM work_schedules WHERE employee_code = ? AND work_date = ?";
+        $scheduleStmt = $conn->prepare($scheduleSql);
+        $scheduleStmt->bind_param("ss", $user['employee_code'], $currentDate);
+        $scheduleStmt->execute();
+        $scheduleResult = $scheduleStmt->get_result();
 
-        if ($checkResult->num_rows == 0) {
-            // Nếu chưa có bản ghi nào, tạo một bản ghi mới
-            $insertTimeSql = "INSERT INTO work_times (employee_code, employee_name, login_time) VALUES (?, ?, ?)";
-            $insertTimeStmt = $conn->prepare($insertTimeSql);
-            $insertTimeStmt->bind_param("sss", $user['employee_code'], $user['employee_name'], $currentTime);
+        if ($scheduleResult->num_rows > 0) {
+            // Lấy thông tin lịch trình (bao gồm giờ bắt đầu và giờ kết thúc)
+            $scheduleSql = "SELECT work_date, start_time, end_time FROM work_schedules WHERE employee_code = ? AND work_date = ?";
+            $scheduleStmt = $conn->prepare($scheduleSql);
+            $scheduleStmt->bind_param("ss", $user['employee_code'], $currentDate);
+            $scheduleStmt->execute();
+            $scheduleResult = $scheduleStmt->get_result();
 
-            if (!$insertTimeStmt->execute()) {
-                error_log("Login time insert error: " . $conn->error);
-                echo json_encode(["success" => false, "message" => "Lỗi khi tạo bản ghi giờ làm việc."]);
-                exit;
+            if ($scheduleResult->num_rows > 0) {
+                $schedule = $scheduleResult->fetch_assoc();
+
+                $startTime = $schedule['start_time'];
+                $endTime = $schedule['end_time'];
+
+                // Lấy giờ hiện tại
+                $currentTime = date('H:i:s');
+
+                // Kiểm tra xem giờ hiện tại có nằm trong khoảng thời gian làm việc không
+                if ($currentTime >= $startTime && $currentTime <= $endTime) {
+                    // Nếu có lịch làm việc và đúng giờ, cho phép đăng nhập
+                    $redirect = "thanhtoan.html";
+                    $hasScheduleToday = true;
+
+                    // Cập nhật trạng thái online và token
+                    $updateSql = "UPDATE users SET auth_token = ?, is_online = 1 WHERE id = ?";
+                    $updateStmt = $conn->prepare($updateSql);
+                    $updateStmt->bind_param("si", $token, $user['id']);
+                    $updateStmt->execute();
+
+                    // Tạo bản ghi giờ làm việc
+                    $checkSql = "SELECT id, logout_time FROM work_times
+                                 WHERE employee_code = ?
+                                 AND DATE(login_time) = CURDATE()
+                                 ORDER BY login_time DESC
+                                 LIMIT 1";
+                    $checkStmt = $conn->prepare($checkSql);
+                    $checkStmt->bind_param("s", $user['employee_code']);
+                    $checkStmt->execute();
+                    $checkResult = $checkStmt->get_result();
+
+                    if ($checkResult->num_rows == 0) {
+                        $currentTime = date('Y-m-d H:i:s');
+                        $insertTimeSql = "INSERT INTO work_times (employee_code, employee_name, login_time) VALUES (?, ?, ?)";
+                        $insertTimeStmt = $conn->prepare($insertTimeSql);
+                        $insertTimeStmt->bind_param("sss", $user['employee_code'], $user['employee_name'], $currentTime);
+
+                        if (!$insertTimeStmt->execute()) {
+                            error_log("Login time insert error: " . $conn->error);
+                            echo json_encode(["success" => false, "message" => "Lỗi khi tạo bản ghi giờ làm việc."]);
+                            exit;
+                        }
+                    } else {
+                        $row = $checkResult->fetch_assoc();
+                        if ($row['logout_time'] !== null && $row['logout_time'] !== '') {
+                            $currentTime = date('Y-m-d H:i:s');
+                            $insertTimeSql = "INSERT INTO work_times (employee_code, employee_name, login_time) VALUES (?, ?, ?)";
+                            $insertTimeStmt = $conn->prepare($insertTimeSql);
+                            $insertTimeStmt->bind_param("sss", $user['employee_code'], $user['employee_name'], $currentTime);
+
+                            if (!$insertTimeStmt->execute()) {
+                                error_log("Login time insert error: " . $conn->error);
+                                echo json_encode(["success" => false, "message" => "Lỗi khi tạo bản ghi giờ làm việc."]);
+                                exit;
+                            }
+                            $updateMonthSql = "UPDATE work_times SET month = MONTH(login_time) WHERE employee_code = ? AND DATE(login_time) = CURDATE()";
+                            $updateMonthStmt = $conn->prepare($updateMonthSql);
+                            $updateMonthStmt->bind_param("s", $user['employee_code']);
+                            $updateMonthStmt->execute();
+                        } else {
+                            error_log("User đã có bản ghi giờ làm việc trong ngày hôm nay và chưa đăng xuất.");
+                        }
+                    }
+                } else {
+                    // Nếu không đúng giờ
+                    $redirect = "salary_result.html";
+                    $hasScheduleToday = false;
+
+                    // Vẫn cập nhật token, nhưng không cập nhật trạng thái online
+                    $updateSql = "UPDATE users SET auth_token = ? , is_online = 0 WHERE id = ?";
+                    $updateStmt = $conn->prepare($updateSql);
+                    $updateStmt->bind_param("si", $token, $user['id']);
+                    $updateStmt->execute();
+                }
+            } else {
+                $redirect = "salary_result.html";
+                $hasScheduleToday = false;
+
+                // Vẫn cập nhật token, nhưng không cập nhật trạng thái online
+                $updateSql = "UPDATE users SET auth_token = ? , is_online = 0 WHERE id = ?";
+                $updateStmt = $conn->prepare($updateSql);
+                $updateStmt->bind_param("si", $token, $user['id']);
+                $updateStmt->execute();
             }
         } else {
-            $row = $checkResult->fetch_assoc();
-            // Nếu đã có bản ghi và logout_time đã được cập nhật, tạo bản ghi mới
-            if ($row['logout_time'] !== null && $row['logout_time'] !== '') {
-                $insertTimeSql = "INSERT INTO work_times (employee_code, employee_name, login_time) VALUES (?, ?, ?)";
-                $insertTimeStmt = $conn->prepare($insertTimeSql);
-                $insertTimeStmt->bind_param("sss", $user['employee_code'], $user['employee_name'], $currentTime);
+            // Nếu không có lịch làm việc
+            $redirect = "salary_result.html";
+            $hasScheduleToday = false;
 
-                if (!$insertTimeStmt->execute()) {
-                    error_log("Login time insert error: " . $conn->error);
-                    echo json_encode(["success" => false, "message" => "Lỗi khi tạo bản ghi giờ làm việc."]);
-                    exit;
-                }
-                // Cập nhật cột month từ login_time
-                $updateMonthSql = "UPDATE work_times SET month = MONTH(login_time) WHERE employee_code = ? AND DATE(login_time) = CURDATE()";
-                $updateMonthStmt = $conn->prepare($updateMonthSql);
-                $updateMonthStmt->bind_param("s", $user['employee_code']);
-                $updateMonthStmt->execute();
-            } else {
-                // Nếu đã có bản ghi và logout_time chưa được cập nhật, không tạo bản ghi mới
-                error_log("User đã có bản ghi giờ làm việc trong ngày hôm nay và chưa đăng xuất.");
-            }
+            // Vẫn cập nhật token, nhưng không cập nhật trạng thái online
+            $updateSql = "UPDATE users SET auth_token = ?, is_online = 0 WHERE id = ?";
+            $updateStmt = $conn->prepare($updateSql);
+            $updateStmt->bind_param("si", $token, $user['id']);
+            $updateStmt->execute();
         }
+    } else {
+        // Nếu là admin, cho phép đăng nhập mà không cần kiểm tra ngày
+        $redirect = "tongquan.html";
+        $hasScheduleToday = true;
+
+        $updateSql = "UPDATE users SET auth_token = ?, is_online = 1 WHERE id = ?";
+        $updateStmt = $conn->prepare($updateSql);
+        $updateStmt->bind_param("si", $token, $user['id']);
+        $updateStmt->execute();
     }
 
     echo json_encode([
         "success" => true,
-        "redirect" => ($user['role'] == 'admin') ? "tongquan.html" : "thanhtoan.html",
+        "redirect" => $redirect,
         "token" => $token,
         "role" => $user['role'],
         "email" => $user['email'],
         "employee_code" => $user['employee_code'],
-        "name" => $user['employee_name']
+        "name" => $user['employee_name'],
+        "hasScheduleToday" => $hasScheduleToday
     ]);
 } else {
     echo json_encode([

@@ -58,17 +58,18 @@ if ($action === 'updateWage') {
         $employee_code = isset($data['employee_code']) ? $data['employee_code'] : null;
 
         // Truy vấn để tính lương
+        // Trong phần calculateSalary, thay đổi SQL query:
         $sql = "SELECT 
-                w.employee_code,
-                n.name AS employee_name,
-                MONTH(w.work_date) as month,
-                YEAR(w.work_date) as year,
-                COUNT(DISTINCT DATE(w.work_date)) as days_worked,
-                SUM(TIMESTAMPDIFF(HOUR, w.login_time, w.logout_time)) as total_hours,
-                nv.luong as hourly_wage
+            w.employee_code,
+            u.employee_name,
+            MONTH(w.work_date) as month,
+            YEAR(w.work_date) as year,
+            COUNT(DISTINCT DATE(w.work_date)) as days_worked,
+            SUM(TIMESTAMPDIFF(HOUR, w.login_time, w.logout_time)) as total_hours,
+            s.hourly_wage
             FROM work_times w
-            LEFT JOIN nhanvien n ON w.employee_code = n.employee_code
-            LEFT JOIN nhanvien1 nv ON w.employee_code = nv.ma_nhan_vien
+            LEFT JOIN users u ON w.employee_code = u.employee_code
+            LEFT JOIN salaries s ON w.employee_code = s.employee_code
             WHERE MONTH(w.work_date) = ? AND YEAR(w.work_date) = ?";
 
         if ($employee_code) {
@@ -153,14 +154,14 @@ if ($action === 'updateWage') {
         }
 
         // Lấy tên nhân viên
-        $stmt = $conn->prepare("SELECT name FROM nhanvien WHERE employee_code = ?");
+        $stmt = $conn->prepare("SELECT employee_name FROM users WHERE employee_code = ?");
         $stmt->bind_param("s", $data['employee_code']);
         $stmt->execute();
         $result = $stmt->get_result();
         $employee_name = '';
         if ($result->num_rows > 0) {
             $row = $result->fetch_assoc();
-            $employee_name = $row['name'];
+            $employee_name = $row['employee_name'];
         }
         $stmt->close();
 

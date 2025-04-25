@@ -191,8 +191,8 @@
 
 <body>
     <div class="navbar">
-        <a href="thanhtoan.html">Thanh Toán</a>
-        <a href="hoadon.html">Hóa Đơn</a>
+        <a href="thanhtoan.html" id="thanhtoanLink">Thanh Toán</a>
+        <a href="hoadon.html" id="hoadonLink">Hóa Đơn</a>
         <a href="salary_result.html">Thống Kê</a>
         <div class="navbar-right">
             <span id="userStatus" class="user-info"></span>
@@ -280,6 +280,7 @@
         let currentEmployeeCode = '';
         let currentEmployeeName = '';
         let userEmail = '';
+        let hasScheduleToday = false;
 
         // Hàm khởi tạo trang
         function initializePage() {
@@ -366,9 +367,60 @@
         // Hàm kiểm tra trạng thái đăng nhập
         function checkLoginStatus() {
             const userToken = localStorage.getItem('user_token');
+
             if (!userToken) {
                 window.location.href = 'index.html';
                 return;
+            }
+
+            fetch('check_session.php', {
+                headers: {
+                    'Authorization': `Bearer ${userToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.loggedIn && data.role === 'user') {
+                        document.getElementById('userStatus').textContent = `Xin chào: ${data.email}`;
+                        hasScheduleToday = data.hasScheduleToday; // Lấy hasScheduleToday từ check_session.php
+                        updateNavigationLinks(); // Gọi hàm để cập nhật liên kết
+                    } else {
+                        localStorage.removeItem('user_token');
+                        window.location.href = 'index.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    localStorage.removeItem('user_token');
+                    window.location.href = 'index.html';
+                });
+        }
+
+        function updateNavigationLinks() {
+            const thanhtoanLink = document.getElementById('thanhtoanLink');
+            const hoadonLink = document.getElementById('hoadonLink');
+
+            if (!hasScheduleToday) {
+                if (thanhtoanLink) {
+                    thanhtoanLink.style.pointerEvents = 'none';
+                    thanhtoanLink.style.color = 'gray';
+                }
+
+                if (hoadonLink) {
+                    hoadonLink.style.pointerEvents = 'none';
+                    hoadonLink.style.color = 'gray';
+                }
+            } else {
+                // Kích hoạt lại các liên kết nếu người dùng có quyền truy cập
+                if (thanhtoanLink) {
+                    thanhtoanLink.style.pointerEvents = 'auto';
+                    thanhtoanLink.style.color = ''; // Trả về màu mặc định
+                }
+
+                if (hoadonLink) {
+                    hoadonLink.style.pointerEvents = 'auto';
+                    hoadonLink.style.color = ''; // Trả về màu mặc định
+                }
             }
         }
 

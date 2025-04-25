@@ -73,6 +73,25 @@ if ($result->num_rows == 1) {
     if ($user['role'] == 'user') {
         $currentTime = date('Y-m-d H:i:s');
 
+        // Lấy giờ kết thúc từ lịch làm việc
+        $scheduleSQL = "SELECT end_time FROM work_schedules 
+                       WHERE employee_code = ? 
+                       AND work_date = CURDATE()";
+        $scheduleStmt = $conn->prepare($scheduleSQL);
+        $scheduleStmt->bind_param("s", $user['employee_code']);
+        $scheduleStmt->execute();
+        $scheduleResult = $scheduleStmt->get_result();
+
+        if ($scheduleResult->num_rows > 0) {
+            $schedule = $scheduleResult->fetch_assoc();
+            $endTime = $schedule['end_time'];
+
+            // Nếu thời gian đăng xuất lớn hơn giờ kết thúc
+            if (strtotime($currentTime) > strtotime(date('Y-m-d') . ' ' . $endTime)) {
+                $currentTime = date('Y-m-d') . ' ' . $endTime;
+            }
+        }
+
         $updateTimeSql = "UPDATE work_times 
                       SET logout_time = ? 
                       WHERE employee_code = ? 

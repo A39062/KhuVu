@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thống Kê Hàng Hóa</title>
+    <style>
+        /* CSS cho thanh điều hướng */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            overflow: hidden;
+            background-color: #2d6ae4;
+            position: sticky;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #043493;
+            color: #ddd;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-right a {
+            padding: 14px 20px;
+            margin-left: 10px;
+        }
+
+        .logout {
+            background-color: #2d6ae4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .logout:hover {
+            background-color: #043493;
+        }
+
+        .user-info {
+            color: white !important;
+            padding: 14px 20px;
+            margin-right: 10px;
+        }
+
+        /* CSS cho bố cục chính */
+        .container {
+            display: flex;
+            padding: 20px;
+            flex-direction: column;
+            /* Để các phần tử con xếp theo chiều dọc */
+            align-items: flex-start;
+            /* Để căn chỉnh các phần tử con ở phía bên trái */
+        }
+
+        /* CSS cho bảng */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        /* CSS cho nút thêm */
+        button {
+            background-color: #2d6ae4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #043493;
+        }
+
+        /* CSS cho form */
+        form {
+            margin-bottom: 20px;
+        }
+
+        /* Thiết lập cho phần thêm hàng hóa */
+        .product-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .product-form input[type="text"],
+        .product-form input[type="number"],
+        .product-form select {
+            flex: 1 1 150px;
+            /* Tạo các ô nhập dữ liệu co giãn */
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .product-form button {
+            flex: 1 1 100px;
+            /* Nút thêm hàng hóa */
+        }
+
+        .search-filters {
+            margin: 20px 0;
+        }
+
+        .search-filters form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-filters input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .search-filters input[type="number"] {
+            width: 120px;
+        }
+
+        .search-filters button {
+            padding: 8px 15px;
+        }
+
+        .search-filters button {
+            padding: 8px 15px;
+            margin-right: 5px;
+        }
+
+        .search-filters button:last-child {
+            background-color: #375ca5;
+            /* Màu xanh lá cho nút "Tất cả" */
+        }
+
+        .search-filters button:last-child:hover {
+            background-color: #043493;
+            /* Màu xanh lá cho nút "Tất cả" */
+        }
+
+        #cancelButton {
+            background-color: #dc3545;
+            margin-left: 10px;
+        }
+
+        #cancelButton:hover {
+            background-color: #c82333;
+        }
+
+        .product-form h2 {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        /* CSS cho thống kê hàng hóa */
+        .statistics-filters {
+            margin-bottom: 10px;
+        }
+
+        .statistics-filters label {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Thanh Điều Hướng -->
+    <div class="navbar">
+        <a href="tongquan.html">Tổng Quan</a>
+        <a href="hanghoa.html">Hàng Hóa</a>
+        <a href="nhanvien1.html">Nhân viên</a>
+        <a href="lichlam1.html">Lịch làm</a>
+        <a href="hoadon_admin.html">Hóa Đơn</a>
+        <a href="thongke_hanghoa.html">Thống Kê Hàng Hóa</a>
+        <div class="navbar-right">
+            <span id="userStatus" class="user-info"></span>
+            <a href="#" class="logout" onclick="handleLogout(event)">Đăng xuất</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Thống Kê Hàng Hóa Theo Nhóm</h2>
+        <div class="statistics-filters">
+            <label for="statisticCategory">Nhóm hàng:</label>
+            <select id="statisticCategory" onchange="filterStatistics()"></select>
+            <label for="statisticDate">Ngày thêm đơn hàng:</label>
+            <input type="date" id="statisticDate" onchange="filterStatistics()">
+            <button onclick="loadAllProducts()">Xem tất cả</button>
+        </div>
+        <table id="productStatisticsTable">
+            <thead>
+                <tr>
+                    <th>Tên Hàng</th>
+                    <th>Giá Gốc</th>
+                    <th>Số Lượng</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dữ liệu thống kê sẽ được hiển thị ở đây -->
+            </tbody>
+        </table>
+        <div id="totalCostDisplay">
+            <!-- Tổng số tiền hàng sẽ được hiển thị ở đây -->
+        </div>
+        <div id="totalQuantityDisplay">
+            <!-- Tổng số lượng hàng sẽ được hiển thị ở đây -->
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // script.js
+
+        // Hàm để nạp dữ liệu thống kê
+        function loadProductStatistics(categoryId = '', orderDate = '') {
+            let url = 'get_product_statistics.php?';
+            if (categoryId) {
+                url += `category_id=${categoryId}&`;
+            }
+            if (orderDate) {
+                url += `order_date=${orderDate}&`;
+            }
+
+            // Loại bỏ dấu '&' cuối cùng nếu có
+            url = url.replace(/&$/, '');
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const statisticsTableBody = document.getElementById('productStatisticsTable').getElementsByTagName('tbody')[0];
+                    statisticsTableBody.innerHTML = '';
+                    const totalCostDisplay = document.getElementById('totalCostDisplay');
+                    const totalQuantityDisplay = document.getElementById('totalQuantityDisplay');
+
+                    // Check if data is an array and has elements
+                    if (Array.isArray(data) && data.length > 0) {
+                        let totalCost = 0; // Khởi tạo biến totalCost
+                        let totalQuantity = 0; // Khởi tạo biến totalQuantity
+                        data.forEach(product => {
+                            const row = statisticsTableBody.insertRow();
+                            row.insertCell(0).textContent = product.name;
+                            row.insertCell(1).textContent = parseFloat(product.cost_price).toFixed(3); // Định dạng giá gốc
+                            row.insertCell(2).textContent = product.initial_quantity;
+                            totalCost += product.cost_price * product.initial_quantity; // Cộng dồn vào totalCost
+                            totalQuantity += parseInt(product.initial_quantity); // Cộng dồn vào totalQuantity
+                        });
+
+                        // Display total cost
+                        totalCostDisplay.textContent = `Tổng tiền hàng là: ${totalCost.toFixed(3)}`; // Định dạng totalCost
+                        totalQuantityDisplay.textContent = `Tổng số lượng hàng đã nhập là: ${totalQuantity}`; // Hiển thị totalQuantity
+                    } else {
+                        totalCostDisplay.textContent = "Không có dữ liệu";
+                        totalQuantityDisplay.textContent = ""; // Xóa nội dung cũ
+                    }
+                })
+                .catch(error => alert('Có lỗi xảy ra khi nạp dữ liệu thống kê: ' + error));
+        }
+
+
+        // Hàm để lọc dữ liệu thống kê
+        function filterStatistics() {
+            const categoryId = document.getElementById('statisticCategory').value;
+            const orderDate = document.getElementById('statisticDate').value;
+            loadProductStatistics(categoryId, orderDate);
+        }
+
+        function loadAllProducts() {
+            document.getElementById('statisticDate').value = ''; // Reset giá trị ngày tháng năm
+            document.getElementById('statisticCategory').value = ''; // Reset giá trị nhóm hàng
+            loadProductStatistics('', ''); // Gọi loadProductStatistics mà không có tham số
+        }
+
+        function loadCategories() {
+            fetch('get_categories.php')
+                .then(response => response.json())
+                .then(data => {
+                    const statisticCategory = document.getElementById('statisticCategory');
+                    statisticCategory.innerHTML = '<option value="">Tất cả</option>';
+
+                    data.forEach(category => {
+                        const statisticOption = document.createElement('option');
+                        statisticOption.value = category.id;
+                        statisticOption.textContent = category.name;
+                        statisticCategory.appendChild(statisticOption);
+                    });
+
+                    loadProductStatistics(); // Load initial statistics
+                })
+                .catch(error => alert('Có lỗi xảy ra khi nạp danh sách nhóm hàng: ' + error));
+        }
+
+        // Call loadCategories() and loadProductStatistics() when the page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            loadCategories();
+            checkLoginStatus(); // Kiểm tra trạng thái đăng nhập khi tải trang
+        });
+
+        // Thêm vào cuối phần document.addEventListener('DOMContentLoaded')
+        document.addEventListener('DOMContentLoaded', function () {
+            loadCategories();
+            checkLoginStatus(); // Thêm dòng này
+        });
+
+        // Kiểm tra token và hiển thị email admin
+        function checkLoginStatus() {
+            const adminToken = localStorage.getItem('admin_token');
+
+            if (!adminToken) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('check_session.php', {
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.loggedIn && data.role === 'admin') {
+                        document.getElementById('userStatus').textContent = `Xin chào: ${data.email}`;
+                    } else {
+                        localStorage.removeItem('admin_token');
+                        window.location.href = 'index.html';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        // Hàm xử lý đăng xuất
+        function handleLogout(event) {
+            event.preventDefault();
+            const adminToken = localStorage.getItem('admin_token');
+
+            if (!adminToken) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            fetch('logout.php', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    localStorage.removeItem('admin_token');
+                    window.location.href = 'index.html';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    localStorage.removeItem('admin_token');
+                    window.location.href = 'index.html';
+                });
+        }
+    </script>
+</body>
+
+</html>

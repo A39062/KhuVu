@@ -216,7 +216,7 @@
         <a href="nhanvien1.html">Nhân viên</a>
         <a href="lichlam1.html">Lịch làm</a>
         <a href="hoadon_admin.html">Hóa Đơn</a>
-
+        <a href="thongke_hanghoa.html">Thống Kê Hàng Hóa</a>
         <div class="navbar-right">
             <span id="userStatus" class="user-info"></span>
             <a href="index.html" class="logout">Đăng xuất</a>
@@ -500,8 +500,7 @@
 
 
 
-        // Xử lý thêm nhóm hàng
-        // Xử lý thêm nhóm hàng
+        // Xử lý thêm nhóm hàng 
         document.getElementById('addCategoryForm').addEventListener('submit', function (event) {
             event.preventDefault();
             const name = document.getElementById('categoryName').value;
@@ -638,10 +637,16 @@
                     document.getElementById('productName').value = product.name;
                     document.getElementById('salePrice').value = product.sale_price;
                     document.getElementById('costPrice').value = product.cost_price;
-                    document.getElementById('quantity').value = product.quantity;
 
-                    // Làm cho mã code không thể sửa
+                    // Ẩn và bỏ required của ô nhập số lượng
+                    const quantityInput = document.getElementById('quantity');
+                    quantityInput.style.display = 'none';
+                    quantityInput.removeAttribute('required');
+
+                    // Làm cho các trường không được phép sửa thành readonly
+                    document.getElementById('categorySelect').disabled = true;
                     document.getElementById('productCode').readOnly = true;
+                    document.getElementById('productName').readOnly = true;
 
                     // Đổi tiêu đề form
                     document.getElementById('formTitle').textContent = 'Sửa Hàng Hóa';
@@ -665,14 +670,21 @@
             // Đổi lại tiêu đề form
             document.getElementById('formTitle').textContent = 'Thêm Hàng Hóa';
 
+            // Reset các trường về trạng thái có thể chỉnh sửa
+            document.getElementById('categorySelect').disabled = false;
+            document.getElementById('productCode').readOnly = false;
+            document.getElementById('productName').readOnly = false;
+
+            // Hiển thị lại và thêm required cho ô số lượng
+            const quantityInput = document.getElementById('quantity');
+            quantityInput.style.display = 'block';
+            quantityInput.setAttribute('required', '');
+
             const submitButton = document.getElementById('submitButton');
             if (submitButton) {
                 submitButton.textContent = 'Thêm Hàng Hóa';
             }
             document.getElementById('cancelButton').style.display = 'none';
-
-            // Cho phép sửa mã code
-            document.getElementById('productCode').readOnly = false;
         });
 
 
@@ -682,77 +694,71 @@
         document.getElementById('addProductForm').addEventListener('submit', function (event) {
             event.preventDefault();
 
-            const quantity = parseInt(document.getElementById('quantity').value, 10);
-            if (quantity <= 0) {
-                alert('Vui lòng nhập số lượng lớn hơn 0');
-                return;
-            }
-
-            const formData = {
-                category_id: parseInt(document.getElementById('categorySelect').value, 10),
-                code: document.getElementById('productCode').value,
-                name: document.getElementById('productName').value,
-                sale_price: parseFloat(document.getElementById('salePrice').value),
-                cost_price: parseFloat(document.getElementById('costPrice').value),
-                quantity: quantity
-            };
-
             const isEditing = document.querySelector('#addProductForm button[type="submit"]').textContent === 'Cập Nhật';
 
-            // Kiểm tra trùng tên sản phẩm hoặc mã với sản phẩm active
-            fetch('check_product_exists.php', {
+            // Tạo formData với các trường phù hợp
+            const formData = {};
+
+            if (isEditing) {
+                // Nếu đang sửa, chỉ gửi code và giá
+                formData.code = document.getElementById('productCode').value;
+                formData.sale_price = parseFloat(document.getElementById('salePrice').value);
+                formData.cost_price = parseFloat(document.getElementById('costPrice').value);
+            } else {
+                // Nếu đang thêm mới, gửi tất cả thông tin
+                formData.category_id = parseInt(document.getElementById('categorySelect').value, 10);
+                formData.code = document.getElementById('productCode').value;
+                formData.name = document.getElementById('productName').value;
+                formData.sale_price = parseFloat(document.getElementById('salePrice').value);
+                formData.cost_price = parseFloat(document.getElementById('costPrice').value);
+
+                const quantity = parseInt(document.getElementById('quantity').value, 10);
+                if (quantity <= 0) {
+                    alert('Vui lòng nhập số lượng lớn hơn 0');
+                    return;
+                }
+                formData.quantity = quantity;
+            }
+
+            const url = isEditing ? 'edit_product.php' : 'add_product.php';
+
+            fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: formData.name,
-                    code: formData.code,
-                    excludeCode: isEditing ? formData.code : null
-                })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(formData)
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.exists) {
-                        alert('Sản phẩm với tên hoặc mã này đã tồn tại và đang hoạt động! Vui lòng chọn tên/mã khác.');
-                        return;
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
                     }
-
-                    const url = isEditing ? 'edit_product.php' : 'add_product.php';
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(formData)
-                    })
-                        .then(response => {
-                            if (!response.ok) {
-                                return response.text().then(text => {
-                                    throw new Error('Server response: ' + text);
-                                });
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.status === 'success') {
-                                alert(data.message || (isEditing ? 'Cập nhật thành công!' : 'Thêm mới thành công!'));
-                                document.getElementById('addProductForm').reset();
-                                document.getElementById('formTitle').textContent = 'Thêm Hàng Hóa';
-                                document.getElementById('submitButton').textContent = 'Thêm Hàng Hóa';
-                                document.getElementById('cancelButton').style.display = 'none';
-                                document.getElementById('productCode').readOnly = false;
-                                filterProductsByCategory();
-                            } else {
-                                throw new Error(data.message || 'Có lỗi xảy ra');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('Có lỗi xảy ra: ' + error.message);
-                        });
+                    return response.json();
                 })
-                .catch(error => alert('Có lỗi xảy ra khi kiểm tra sản phẩm: ' + error));
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(isEditing ? 'Cập nhật giá thành công!' : 'Thêm mới thành công!');
+                        // Reset form và UI
+                        document.getElementById('addProductForm').reset();
+                        document.getElementById('formTitle').textContent = 'Thêm Hàng Hóa';
+                        document.getElementById('submitButton').textContent = 'Thêm Hàng Hóa';
+                        document.getElementById('cancelButton').style.display = 'none';
+                        document.getElementById('productCode').readOnly = false;
+                        document.getElementById('categorySelect').disabled = false;
+                        document.getElementById('productName').readOnly = false;
+                        document.getElementById('quantity').style.display = 'block';
+                        document.getElementById('quantity').setAttribute('required', '');
+                        // Tải lại danh sách sản phẩm
+                        filterProductsByCategory();
+                    } else {
+                        throw new Error(data.message || 'Có lỗi xảy ra');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra: ' + error.message);
+                });
         });
 
 
