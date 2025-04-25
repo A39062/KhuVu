@@ -232,16 +232,17 @@
         <div class="statistics-filters">
             <label for="statisticCategory">Nhóm hàng:</label>
             <select id="statisticCategory" onchange="filterStatistics()"></select>
-            <label for="statisticDate">Ngày thêm đơn hàng:</label>
+            <label for="statisticDate">Ngày nhập hàng:</label>
             <input type="date" id="statisticDate" onchange="filterStatistics()">
             <button onclick="loadAllProducts()">Xem tất cả</button>
         </div>
         <table id="productStatisticsTable">
             <thead>
                 <tr>
+                    <th>Mã Sản Phẩm</th>
                     <th>Tên Hàng</th>
                     <th>Giá Gốc</th>
-                    <th>Số Lượng</th>
+                    <th>Số Lượng Thêm</th>
                 </tr>
             </thead>
             <tbody>
@@ -261,13 +262,13 @@
         // script.js
 
         // Hàm để nạp dữ liệu thống kê
-        function loadProductStatistics(categoryId = '', orderDate = '') {
+        function loadProductStatistics(categoryId = '', importDate = '') {
             let url = 'get_product_statistics.php?';
             if (categoryId) {
                 url += `category_id=${categoryId}&`;
             }
-            if (orderDate) {
-                url += `order_date=${orderDate}&`;
+            if (importDate) {
+                url += `import_date=${importDate}&`;
             }
 
             // Loại bỏ dấu '&' cuối cùng nếu có
@@ -281,25 +282,26 @@
                     const totalCostDisplay = document.getElementById('totalCostDisplay');
                     const totalQuantityDisplay = document.getElementById('totalQuantityDisplay');
 
-                    // Check if data is an array and has elements
+                    // Kiểm tra nếu dữ liệu là mảng và có phần tử
                     if (Array.isArray(data) && data.length > 0) {
-                        let totalCost = 0; // Khởi tạo biến totalCost
-                        let totalQuantity = 0; // Khởi tạo biến totalQuantity
-                        data.forEach(product => {
+                        let totalCost = 0;
+                        let totalQuantity = 0;
+                        data.forEach(log => {
                             const row = statisticsTableBody.insertRow();
-                            row.insertCell(0).textContent = product.name;
-                            row.insertCell(1).textContent = parseFloat(product.cost_price).toFixed(3); // Định dạng giá gốc
-                            row.insertCell(2).textContent = product.initial_quantity;
-                            totalCost += product.cost_price * product.initial_quantity; // Cộng dồn vào totalCost
-                            totalQuantity += parseInt(product.initial_quantity); // Cộng dồn vào totalQuantity
+                            row.insertCell(0).textContent = log.code; // Mã sản phẩm
+                            row.insertCell(1).textContent = log.name; // Tên sản phẩm
+                            row.insertCell(2).textContent = parseFloat(log.cost_price).toFixed(3); // Giá gốc
+                            row.insertCell(3).textContent = log.quantity_added; // Số lượng thêm
+                            totalCost += parseFloat(log.cost_price) * parseInt(log.quantity_added); // Tổng tiền hàng
+                            totalQuantity += parseInt(log.quantity_added); // Tổng số lượng
                         });
 
-                        // Display total cost
-                        totalCostDisplay.textContent = `Tổng tiền hàng là: ${totalCost.toFixed(3)}`; // Định dạng totalCost
-                        totalQuantityDisplay.textContent = `Tổng số lượng hàng đã nhập là: ${totalQuantity}`; // Hiển thị totalQuantity
+                        // Hiển thị tổng tiền và tổng số lượng
+                        totalCostDisplay.textContent = `Tổng tiền hàng là: ${totalCost.toFixed(3)}`;
+                        totalQuantityDisplay.textContent = `Tổng số lượng hàng đã nhập là: ${totalQuantity}`;
                     } else {
                         totalCostDisplay.textContent = "Không có dữ liệu";
-                        totalQuantityDisplay.textContent = ""; // Xóa nội dung cũ
+                        totalQuantityDisplay.textContent = "";
                     }
                 })
                 .catch(error => alert('Có lỗi xảy ra khi nạp dữ liệu thống kê: ' + error));
@@ -309,14 +311,14 @@
         // Hàm để lọc dữ liệu thống kê
         function filterStatistics() {
             const categoryId = document.getElementById('statisticCategory').value;
-            const orderDate = document.getElementById('statisticDate').value;
-            loadProductStatistics(categoryId, orderDate);
+            const importDate = document.getElementById('statisticDate').value;
+            loadProductStatistics(categoryId, importDate);
         }
 
         function loadAllProducts() {
-            document.getElementById('statisticDate').value = ''; // Reset giá trị ngày tháng năm
-            document.getElementById('statisticCategory').value = ''; // Reset giá trị nhóm hàng
-            loadProductStatistics('', ''); // Gọi loadProductStatistics mà không có tham số
+            document.getElementById('statisticDate').value = ''; // Reset ngày nhập
+            document.getElementById('statisticCategory').value = ''; // Reset nhóm hàng
+            loadProductStatistics('', ''); // Hiển thị tất cả
         }
 
         function loadCategories() {

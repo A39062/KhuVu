@@ -1,5 +1,4 @@
 <?php
-// filepath: c:\xampp\htdocs\Myproject4\get_product_statistics.php
 header('Content-Type: application/json');
 
 // Kết nối đến database
@@ -15,23 +14,21 @@ if ($conn->connect_error) {
 }
 
 $categoryId = isset($_GET['category_id']) ? $_GET['category_id'] : '';
-$orderDate = isset($_GET['order_date']) ? $_GET['order_date'] : '';
+$importDate = isset($_GET['import_date']) ? $_GET['import_date'] : '';
 
-$sql = "SELECT p.name, p.cost_price, p.initial_quantity, 
-               SUM(p.cost_price * p.initial_quantity) AS total_cost_price,
-               SUM(p.initial_quantity) AS total_quantity
-        FROM products p
+// Truy vấn lấy dữ liệu từ product_import_logs, kết hợp với products
+$sql = "SELECT pil.id, pil.product_id, pil.code, pil.name, pil.quantity_added, pil.import_date, p.cost_price
+        FROM product_import_logs pil
+        JOIN products p ON pil.product_id = p.id
         WHERE p.is_active = 1";
 
 if ($categoryId) {
-    $sql .= " AND p.category_id = " . $categoryId;
+    $sql .= " AND p.category_id = " . $conn->real_escape_string($categoryId);
 }
 
-if ($orderDate) {
-    $sql .= " AND DATE(p.created_at) = '" . $conn->real_escape_string($orderDate) . "'";
+if ($importDate) {
+    $sql .= " AND DATE(pil.import_date) = '" . $conn->real_escape_string($importDate) . "'";
 }
-
-$sql .= " GROUP BY p.name, p.cost_price, p.initial_quantity";
 
 $result = $conn->query($sql);
 
