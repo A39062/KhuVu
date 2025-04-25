@@ -187,6 +187,23 @@
                                 title: {
                                     display: true,
                                     text: 'Doanh Thu (Triệu VND)'
+                                },
+                                ticks: {
+                                    callback: function (value) {
+                                        return parseFloat(value).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' Triệu';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        let value = context.parsed.y;
+                                        // Định dạng giá trị với 3 chữ số thập phân và dấu chấm phân cách hàng nghìn
+                                        let formattedValue = parseFloat(value).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                                        return `Doanh Thu: ${formattedValue}`;
+                                    }
                                 }
                             }
                         }
@@ -194,8 +211,6 @@
                 });
             })
             .catch(error => console.log('Lỗi tải dữ liệu doanh thu:', error));
-
-
         // Hàm để lấy năm hiện tại và điền vào select
         function populateYears() {
             const yearSelect = document.getElementById('yearSelect');

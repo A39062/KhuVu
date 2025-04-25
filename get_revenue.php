@@ -27,7 +27,8 @@ $revenue = [];
 
 while ($row = $result->fetch_assoc()) {
     $labels[] = $row['day'];
-    $revenue[] = $row['revenue'];
+    // Định dạng doanh thu với 3 chữ số thập phân
+    $revenue[] = number_format((float)$row['revenue'], 3, '.', '');
 }
 
 // Đảo ngược để hiển thị từ ngày cũ đến mới

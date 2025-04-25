@@ -290,14 +290,17 @@
                             const row = statisticsTableBody.insertRow();
                             row.insertCell(0).textContent = log.code; // Mã sản phẩm
                             row.insertCell(1).textContent = log.name; // Tên sản phẩm
-                            row.insertCell(2).textContent = parseFloat(log.cost_price).toFixed(3); // Giá gốc
+                            row.insertCell(2).textContent = parseFloat(log.cost_price).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // Giá gốc
                             row.insertCell(3).textContent = log.quantity_added; // Số lượng thêm
                             totalCost += parseFloat(log.cost_price) * parseInt(log.quantity_added); // Tổng tiền hàng
                             totalQuantity += parseInt(log.quantity_added); // Tổng số lượng
                         });
 
+                        // Định dạng tổng tiền hàng với dấu chấm phân cách hàng nghìn và 3 chữ số thập phân
+                        const formattedTotalCost = totalCost.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
                         // Hiển thị tổng tiền và tổng số lượng
-                        totalCostDisplay.textContent = `Tổng tiền hàng là: ${totalCost.toFixed(3)}`;
+                        totalCostDisplay.textContent = `Tổng tiền hàng là: ${formattedTotalCost}`;
                         totalQuantityDisplay.textContent = `Tổng số lượng hàng đã nhập là: ${totalQuantity}`;
                     } else {
                         totalCostDisplay.textContent = "Không có dữ liệu";

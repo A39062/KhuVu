@@ -403,9 +403,9 @@
                 <td>${invoice.product_names || 'Không có sản phẩm'}</td>
                 <td>${formattedDate}</td>
                 <td>${formattedTime}</td>
-                <td>${(total / (1 - discount / 100)).toLocaleString('vi-VN')} VNĐ</td>
+                <td>${(total / (1 - discount / 100)).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} VNĐ</td>
                 <td>${discount}%</td>
-                <td>${finalTotal.toLocaleString('vi-VN')} VNĐ</td>
+                <td>${finalTotal.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} VNĐ</td>
                 <td>${invoice.payment_method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}</td>
                 <td><button onclick="viewInvoiceDetails(${invoice.id})">Xem Chi Tiết</button></td>
             `;

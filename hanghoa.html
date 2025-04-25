@@ -300,14 +300,12 @@
 
 
         function showAllProducts() {
-            // Xóa tất cả các giá trị tìm kiếm
             document.getElementById('searchCode').value = '';
             document.getElementById('searchName').value = '';
             document.getElementById('minPrice').value = '';
             document.getElementById('maxPrice').value = '';
             document.getElementById('filterCategory').value = '';
 
-            // Tải lại tất cả sản phẩm
             fetch('get_products.php')
                 .then(response => response.json())
                 .then(data => {
@@ -317,16 +315,16 @@
                     data.forEach(product => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td>${product.code}</td>
-                            <td>${product.name}</td>
-                            <td>${product.sale_price}</td>
-                            <td>${product.cost_price}</td>
-                            <td>${product.quantity}</td>
-                            <td>
-                                <button onclick="editProduct(${product.code})">Sửa</button>
-                                <button onclick="deleteProduct(${product.id})">Xóa</button>
-                            </td>
-                        `;
+                    <td>${product.code}</td>
+                    <td>${product.name}</td>
+                    <td>${parseFloat(product.sale_price).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}</td>
+                    <td>${parseFloat(product.cost_price).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}</td>
+                    <td>${product.quantity}</td>
+                    <td>
+                        <button onclick="editProduct('${product.code}')">Sửa</button>
+                        <button onclick="deleteProduct(${product.id})">Xóa</button>
+                    </td>
+                `;
                         productTable.appendChild(row);
                     });
                 })
@@ -444,16 +442,15 @@
                         const row = productTable.insertRow();
                         row.insertCell(0).textContent = product.code;
                         row.insertCell(1).textContent = product.name;
-                        row.insertCell(2).textContent = product.sale_price;
-                        row.insertCell(3).textContent = product.cost_price;
+                        row.insertCell(2).textContent = parseFloat(product.sale_price).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // Định dạng giá bán
+                        row.insertCell(3).textContent = parseFloat(product.cost_price).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // Định dạng giá vốn
                         row.insertCell(4).textContent = product.quantity;
                         const actionCell = row.insertCell(5);
                         actionCell.innerHTML = `
-                            <button onclick="editProduct('${product.code}')">Sửa</button>
-                            <button onclick="deleteProduct(${product.id})">Xóa</button>
-                        `;
+                    <button onclick="editProduct('${product.code}')">Sửa</button>
+                    <button onclick="deleteProduct(${product.id})">Xóa</button>
+                `;
                     });
-
                 })
                 .catch(error => alert('Có lỗi xảy ra khi nạp danh sách hàng hóa: ' + error));
         }
@@ -463,6 +460,24 @@
             const categoryId = document.getElementById('filterCategory').value;
             loadProducts(categoryId);
         }
+
+        function formatPriceInput(input) {
+            // Lấy giá trị từ ô nhập và loại bỏ ký tự không phải số hoặc dấu chấm
+            let value = input.value.replace(/[^0-9.]/g, '');
+
+            // Chuyển thành số thực
+            let numberValue = parseFloat(value);
+
+            // Nếu không phải là số hợp lệ, để trống
+            if (isNaN(numberValue)) {
+                input.value = '';
+                return;
+            }
+
+            // Định dạng với 3 chữ số thập phân
+            input.value = numberValue.toFixed(3);
+        }
+
         function searchProducts() {
             const searchCode = document.getElementById('searchCode').value;
             const searchName = document.getElementById('searchName').value;
@@ -481,11 +496,11 @@
                         row.innerHTML = `
                     <td>${product.code}</td>
                     <td>${product.name}</td>
-                    <td>${product.sale_price}</td>
-                    <td>${product.cost_price}</td>
+                    <td>${parseFloat(product.sale_price).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}</td>
+                    <td>${parseFloat(product.cost_price).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}</td>
                     <td>${product.quantity}</td>
                     <td>
-                        <button onclick="editProduct(${product.id})">Sửa</button>
+                        <button onclick="editProduct('${product.code}')">Sửa</button>
                         <button onclick="deleteProduct(${product.id})">Xóa</button>
                     </td>
                 `;
